@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class BadgeController extends Controller
 {
@@ -145,117 +146,27 @@ class BadgeController extends Controller
     }
 
     /**
-     * Download badge as PNG image.
-     * Uses HTML to image conversion approach via a dedicated view.
+     * Download badge as PDF.
+     * Uses the same HTML/CSS as print view for consistent design.
      */
     public function downloadQrCode(Badge $badge)
     {
         $badge->load('employee.department');
         
-        // Générer le QR code en PNG pour l'intégration
-        $qrCodePng = QrCode::format('png')
-            ->size(200)
+        // Générer le QR code en SVG pour l'affichage
+        $qrCodeSvg = QrCode::size(200)
             ->margin(1)
             ->generate($badge->qr_code);
         
-        // Créer une image composite avec GD
-        // Dimensions: 85.6mm x 53.98mm à 300 DPI = 1011px x 637px
-        // On utilise 1000px x 630px pour un bon ratio
-        $width = 1000;
-        $height = 630;
+        // Générer le PDF avec le même design que print.blade.php
+        $pdf = Pdf::loadView('badges.badge-pdf', compact('badge', 'qrCodeSvg'));
         
-        $image = imagecreatetruecolor($width, $height);
-        imagealphablending($image, true);
-        imagesavealpha($image, true);
+        // Définir la taille de page personnalisée pour le badge (85.6mm x 53.98mm)
+        $pdf->setPaper([0, 0, 323.15, 203.97], 'custom'); // 85.6mm = 323.15pt, 53.98mm = 203.97pt (1mm = 2.83465pt)
         
-        // Couleurs
-        $greenDark = imagecolorallocate($image, 7, 65, 54); // #074136
-        $greenLight = imagecolorallocate($image, 10, 90, 74); // #0a5a4a
-        $white = imagecolorallocate($image, 255, 255, 255);
-        $whiteSemi = imagecolorallocatealpha($image, 255, 255, 255, 50);
-        $textWhite = imagecolorallocate($image, 255, 255, 255);
-        $textDark = imagecolorallocate($image, 7, 65, 54);
+        $fileName = 'Badge-' . $badge->badge_number . '-' . $badge->id . '.pdf';
         
-        // Fond vert (tout le badge est vert)
-        imagefilledrectangle($image, 0, 0, $width, $height, $greenDark);
-        
-        // Logo GASPARD SIGNATURE (en haut à gauche)
-        imagestring($image, 5, 30, 20, 'GASPARD', $textWhite);
-        imagestring($image, 3, 30, 45, 'SIGNATURE', $textWhite);
-        
-        // Numéro de badge (en haut à droite)
-        $badgeNumberText = '#' . $badge->badge_number;
-        $badgeNumberWidth = imagefontwidth(3) * strlen($badgeNumberText) + 20;
-        $badgeNumberX = $width - $badgeNumberWidth - 20;
-        // Fond semi-transparent pour le numéro
-        imagefilledrectangle($image, $badgeNumberX - 10, 25, $badgeNumberX + $badgeNumberWidth, 50, $whiteSemi);
-        imagestring($image, 3, $badgeNumberX, 30, $badgeNumberText, $textDark);
-        
-        // Nom de l'employé (en majuscules, dans le body)
-        $bodyY = 80;
-        $employeeName = strtoupper($badge->employee->full_name);
-        imagestring($image, 5, 30, $bodyY, $employeeName, $textWhite);
-        
-        // Détails employé
-        $detailY = $bodyY + 50;
-        $lineHeight = 30;
-        
-        $codeText = 'Code: ' . $badge->employee->employee_code;
-        imagestring($image, 3, 30, $detailY, $codeText, $textWhite);
-        
-        if ($badge->employee->position) {
-            $posteText = 'Poste: ' . $badge->employee->position;
-            imagestring($image, 3, 30, $detailY + $lineHeight, $posteText, $textWhite);
-        }
-        
-        if ($badge->employee->department) {
-            $deptText = 'Dept: ' . $badge->employee->department->name;
-            $deptY = $detailY + ($badge->employee->position ? $lineHeight * 2 : $lineHeight);
-            imagestring($image, 3, 30, $deptY, $deptText, $textWhite);
-        }
-        
-        // QR Code (à droite, dans le body vert)
-        $qrCodeImage = imagecreatefromstring($qrCodePng);
-        $qrSize = 140; // Taille du QR code dans le badge
-        $qrX = $width - $qrSize - 40;
-        $qrY = $bodyY + 20;
-        
-        // Fond blanc pour le QR code
-        imagefilledrectangle($image, $qrX - 5, $qrY - 5, $qrX + $qrSize + 5, $qrY + $qrSize + 5, $white);
-        
-        // Copier le QR code
-        imagecopyresampled($image, $qrCodeImage, $qrX, $qrY, 0, 0, $qrSize, $qrSize, imagesx($qrCodeImage), imagesy($qrCodeImage));
-        imagedestroy($qrCodeImage);
-        
-        // Texte "SCAN ME" sous le QR code
-        $scanText = 'SCAN ME';
-        $scanTextWidth = imagefontwidth(2) * strlen($scanText);
-        $scanTextX = $qrX + ($qrSize / 2) - ($scanTextWidth / 2);
-        imagestring($image, 2, $scanTextX, $qrY + $qrSize + 8, $scanText, $textWhite);
-        
-        // Footer - Département et Validité
-        $footerY = $height - 40;
-        $departmentName = strtoupper($badge->employee->department->name ?? 'N/A');
-        imagestring($image, 3, 30, $footerY, $departmentName, $textWhite);
-        
-        $validityText = $badge->expires_at 
-            ? 'Valide jusqu\'au ' . $badge->expires_at->format('m/Y')
-            : 'Valide indefiniment';
-        $validityWidth = imagefontwidth(2) * strlen($validityText);
-        imagestring($image, 2, $width - $validityWidth - 30, $footerY, $validityText, $textWhite);
-        
-        // Output
-        ob_start();
-        imagepng($image, null, 9); // Qualité maximale
-        $imageData = ob_get_contents();
-        ob_end_clean();
-        imagedestroy($image);
-        
-        $fileName = 'Badge-' . $badge->badge_number . '-' . $badge->id . '.png';
-        
-        return response($imageData)
-            ->header('Content-Type', 'image/png')
-            ->header('Content-Disposition', 'attachment; filename="' . $fileName . '"');
+        return $pdf->download($fileName);
     }
 
     /**

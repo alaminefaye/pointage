@@ -122,12 +122,12 @@
                                 <i class="bx bx-printer"></i> Imprimer le Badge
                             </a>
                             <a href="{{ route('badges.download-qr', $badge) }}" class="btn btn-success">
-                                <i class="bx bx-download"></i> Télécharger Badge (PNG)
+                                <i class="bx bx-download"></i> Télécharger Badge (PDF)
                             </a>
                         </div>
                         <p class="text-muted mt-2 mb-0"><small>Code QR: {{ $badge->qr_code }}</small></p>
                         <div class="alert alert-info mt-3">
-                            <i class="bx bx-info-circle"></i> <strong>Instructions:</strong> Le badge est prêt à être imprimé et plastifié. Cliquez sur "Télécharger Badge (PNG)" pour obtenir une image haute résolution.
+                            <i class="bx bx-info-circle"></i> <strong>Instructions:</strong> Le badge est prêt à être imprimé et plastifié. Cliquez sur "Télécharger Badge (PDF)" pour obtenir un fichier PDF avec le même design que la page d'impression.
                         </div>
                     </div>
                 </div>
