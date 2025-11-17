@@ -1,0 +1,170 @@
+/* Custom Brand Colors - GASPARD SIGNATURE */
+:root {
+    --bs-primary: #074136 !important;
+    --bs-purple: #074136 !important;
+    --bs-primary-rgb: 7, 65, 54 !important;
+}
+
+/* Replace all #696cff colors with #074136 */
+* {
+    --bs-primary-rgb: 7, 65, 54 !important;
+}
+
+/* Override SVG fills - multiple selectors for different encodings */
+svg [fill="#696cff"],
+svg [fill="%23696cff"],
+svg use[fill="#696cff"],
+svg use[fill="%23696cff"],
+use[fill="#696cff"],
+use[fill="%23696cff"],
+svg use[xlink\:href] ~ * {
+    fill: #074136 !important;
+}
+
+/* Replace in style attributes */
+[style*="#696cff"],
+[style*="%23696cff"] {
+    background: #074136 !important;
+    color: #074136 !important;
+    border-color: #074136 !important;
+}
+
+/* Primary color overrides */
+.text-primary {
+    color: #074136 !important;
+}
+
+.btn-primary,
+.bg-primary,
+.border-primary,
+.badge.bg-primary {
+    color: #ffffff !important;
+    background-color: #074136 !important;
+    border-color: #074136 !important;
+}
+
+.btn-primary {
+    background-color: #074136 !important;
+    border-color: #074136 !important;
+    color: #ffffff !important;
+}
+
+.bg-label-primary,
+.badge.bg-label-primary {
+    background-color: rgba(7, 65, 54, 0.1) !important;
+    color: #074136 !important;
+    border-color: transparent !important;
+}
+
+.avatar.bg-label-primary {
+    background-color: rgba(7, 65, 54, 0.1) !important;
+    color: #074136 !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+    background-color: #052d25 !important;
+    border-color: #052d25 !important;
+    color: #ffffff !important;
+}
+
+/* Button outline primary */
+.btn-outline-primary {
+    color: #074136 !important;
+    border-color: #074136 !important;
+    background: transparent !important;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus,
+.btn-outline-primary:active {
+    background-color: #074136 !important;
+    border-color: #074136 !important;
+    color: #ffffff !important;
+}
+
+/* Page link active */
+.page-item.active .page-link {
+    background-color: #074136 !important;
+    border-color: #074136 !important;
+    color: #ffffff !important;
+}
+
+/* Card header with primary background */
+.card-header.bg-primary {
+    background-color: #074136 !important;
+    color: #ffffff !important;
+}
+
+/* Menu active state */
+.menu-item.active > .menu-link,
+.menu-item.active > .menu-link i {
+    color: #074136 !important;
+}
+
+/* Links */
+a:not(.btn):not(.dropdown-item) {
+    color: #074136 !important;
+}
+
+a:not(.btn):not(.dropdown-item):hover {
+    color: #052d25 !important;
+}
+
+/* Form controls focus */
+.form-control:focus,
+.form-select:focus {
+    border-color: #074136 !important;
+    box-shadow: 0 0 0 0.25rem rgba(7, 65, 54, 0.25) !important;
+}
+
+/* Checkbox and radio */
+.form-check-input:checked {
+    background-color: #074136 !important;
+    border-color: #074136 !important;
+}
+
+/* Pagination */
+.page-link {
+    color: #074136 !important;
+}
+
+.page-item.active .page-link {
+    background-color: #074136 !important;
+    border-color: #074136 !important;
+}
+
+/* Table */
+.table-primary {
+    background-color: rgba(7, 65, 54, 0.1) !important;
+    color: #074136 !important;
+}
+
+/* Alert primary */
+.alert-primary {
+    background-color: rgba(7, 65, 54, 0.1) !important;
+    border-color: #074136 !important;
+    color: #074136 !important;
+}
+
+/* Card header with primary */
+.card-header.bg-primary {
+    background-color: #074136 !important;
+}
+
+/* Progress bar */
+.progress-bar {
+    background-color: #074136 !important;
+}
+
+/* Badge primary */
+.badge.bg-primary {
+    background-color: #074136 !important;
+}
+
+/* Navbar brand */
+.navbar-brand {
+    color: #074136 !important;
+}
+
