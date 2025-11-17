@@ -68,12 +68,17 @@
                                 {!! $qrCodeSvg !!}
                             </div>
                         </div>
-                        <a href="{{ route('badges.download-qr', $badge) }}" class="btn btn-primary">
-                            <i class="bx bx-download"></i> Télécharger le QR Code (PNG)
-                        </a>
+                        <div class="d-flex gap-2 justify-content-center flex-wrap">
+                            <a href="{{ route('badges.print', $badge) }}" class="btn btn-primary" target="_blank">
+                                <i class="bx bx-printer"></i> Imprimer le Badge
+                            </a>
+                            <a href="{{ route('badges.download-qr', $badge) }}" class="btn btn-success">
+                                <i class="bx bx-download"></i> Télécharger QR Code (PNG)
+                            </a>
+                        </div>
                         <p class="text-muted mt-2 mb-0"><small>Code: {{ $badge->qr_code }}</small></p>
                         <div class="alert alert-info mt-3">
-                            <i class="bx bx-info-circle"></i> <strong>Instructions:</strong> Imprimez ce QR code et collez-le sur le badge physique de l'employé. L'employé pourra scanner ce QR code avec un lecteur de badge pour pointer son entrée/sortie.
+                            <i class="bx bx-info-circle"></i> <strong>Instructions:</strong> Cliquez sur "Imprimer le Badge" pour voir le design complet du badge avec toutes les informations. Le badge est prêt à être imprimé et plastifié.
                         </div>
                     </div>
                 </div>

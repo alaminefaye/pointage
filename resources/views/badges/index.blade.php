@@ -105,6 +105,9 @@
                             <a href="{{ route('badges.show', $badge) }}" class="btn btn-sm btn-info" title="Voir">
                                 <i class="bx bx-show"></i>
                             </a>
+                            <a href="{{ route('badges.print', $badge) }}" class="btn btn-sm btn-primary" title="Imprimer" target="_blank">
+                                <i class="bx bx-printer"></i>
+                            </a>
                             <a href="{{ route('badges.edit', $badge) }}" class="btn btn-sm btn-warning" title="Modifier">
                                 <i class="bx bx-edit"></i>
                             </a>

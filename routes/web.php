@@ -106,6 +106,7 @@ Route::middleware(['auth'])->group(function () {
     // Badges
     Route::resource('badges', BadgeController::class);
     Route::get('/badges/{badge}/download-qr', [BadgeController::class, 'downloadQrCode'])->name('badges.download-qr');
+    Route::get('/badges/{badge}/print', [BadgeController::class, 'print'])->name('badges.print');
     Route::post('/badges/{badge}/toggle-status', [BadgeController::class, 'toggleStatus'])->name('badges.toggle-status');
 });
 

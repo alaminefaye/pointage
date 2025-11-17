@@ -173,4 +173,19 @@ class BadgeController extends Controller
         return redirect()->route('badges.index')
             ->with('success', "Badge {$status} avec succès.");
     }
+
+    /**
+     * Display printable badge design.
+     */
+    public function print(Badge $badge)
+    {
+        $badge->load('employee.department');
+        
+        // Générer le QR code en SVG pour l'affichage
+        $qrCodeSvg = QrCode::size(200)
+            ->margin(1)
+            ->generate($badge->qr_code);
+        
+        return view('badges.print', compact('badge', 'qrCodeSvg'));
+    }
 }

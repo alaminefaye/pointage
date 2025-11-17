@@ -24,10 +24,10 @@
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Employé *</label>
-                    <select class="form-select @error('employee_id') is-invalid @enderror" name="employee_id" required>
+                    <select class="form-select @error('employee_id') is-invalid @enderror" name="employee_id" id="employee_id" required>
                         <option value="">Sélectionner un employé</option>
                         @foreach($employees as $employee)
-                            <option value="{{ $employee->id }}" {{ old('employee_id', $badge->employee_id) == $employee->id ? 'selected' : '' }}>
+                            <option value="{{ $employee->id }}" data-employee-code="{{ $employee->employee_code }}" {{ old('employee_id', $badge->employee_id) == $employee->id ? 'selected' : '' }}>
                                 {{ $employee->full_name }} ({{ $employee->employee_code }})
                             </option>
                         @endforeach
@@ -38,7 +38,8 @@
                 </div>
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Numéro de Badge *</label>
-                    <input type="text" class="form-control @error('badge_number') is-invalid @enderror" name="badge_number" value="{{ old('badge_number', $badge->badge_number) }}" required>
+                    <input type="text" class="form-control @error('badge_number') is-invalid @enderror" name="badge_number" id="badge_number" value="{{ old('badge_number', $badge->badge_number) }}" required>
+                    <small class="text-muted">Numéro unique pour identifier le badge (rempli automatiquement avec le code de l'employé)</small>
                     @error('badge_number')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
@@ -78,5 +79,33 @@
         </form>
     </div>
 </div>
+
+@push('page-js')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const employeeSelect = document.getElementById('employee_id');
+        const badgeNumberInput = document.getElementById('badge_number');
+        
+        // Remplir automatiquement au chargement si un employé est déjà sélectionné
+        if (employeeSelect.value) {
+            const selectedOption = employeeSelect.options[employeeSelect.selectedIndex];
+            if (selectedOption && selectedOption.dataset.employeeCode) {
+                // Ne remplir que si le champ est vide ou contient l'ancien numéro de badge
+                if (!badgeNumberInput.value || badgeNumberInput.value === '{{ $badge->badge_number }}') {
+                    badgeNumberInput.value = selectedOption.dataset.employeeCode;
+                }
+            }
+        }
+        
+        // Écouter les changements du select employé
+        employeeSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            if (selectedOption && selectedOption.dataset.employeeCode) {
+                badgeNumberInput.value = selectedOption.dataset.employeeCode;
+            }
+        });
+    });
+</script>
+@endpush
 @endsection
 
