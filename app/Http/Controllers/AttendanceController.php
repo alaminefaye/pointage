@@ -218,9 +218,20 @@ class AttendanceController extends Controller
     {
         $employeeId = $request->input('employee_id');
         $today = Carbon::today();
+        $yesterday = Carbon::yesterday();
 
+        // Chercher le pointage d'aujourd'hui ou d'hier (si travail de nuit)
         $attendance = AttendanceRecord::where('employee_id', $employeeId)
-            ->where('date', $today)
+            ->where(function($query) use ($today, $yesterday) {
+                $query->where('date', $today)
+                      ->orWhere(function($q) use ($yesterday) {
+                          // Si c'est hier, vérifier qu'il n'y a pas encore de check_out (travail de nuit en cours)
+                          $q->where('date', $yesterday)
+                            ->whereNotNull('check_in_time')
+                            ->whereNull('check_out_time');
+                      });
+            })
+            ->orderBy('date', 'desc')
             ->first();
 
         return response()->json([

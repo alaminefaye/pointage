@@ -67,14 +67,14 @@ class QrCodeController extends Controller
                 // Fallback to dynamic QR code if no static code exists
                 try {
                     $qrCode = $this->qrCodeService->getCurrentQrCode($site->id);
-                    $result[] = [
+            $result[] = [
                         'site_id' => $site->id,
-                        'site_name' => $site->name,
-                        'code' => $qrCode->code,
+                'site_name' => $site->name,
+                'code' => $qrCode->code,
                         'is_static' => false,
-                        'expires_at' => $qrCode->expires_at->toIso8601String(),
-                        'expires_in_seconds' => max(0, now()->diffInSeconds($qrCode->expires_at, false)),
-                    ];
+                'expires_at' => $qrCode->expires_at->toIso8601String(),
+                'expires_in_seconds' => max(0, now()->diffInSeconds($qrCode->expires_at, false)),
+            ];
                 } catch (\Exception $e) {
                     // Skip sites without QR codes
                     continue;

@@ -5,3 +5,6 @@ return [
     'next' => 'Suivant &raquo;',
 ];
 
+
+
+
