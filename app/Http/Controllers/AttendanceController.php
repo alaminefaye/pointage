@@ -63,10 +63,10 @@ class AttendanceController extends Controller
     public function checkIn(Request $request)
     {
         $validated = $request->validate([
-            'employee_id' => 'required|exists:employees,id',
-            'qr_code' => 'required|string',
-            'latitude' => 'required|numeric',
-            'longitude' => 'required|numeric',
+            'employee_id' => 'required|integer|exists:employees,id',
+            'qr_code' => 'required|string|max:255',
+            'latitude' => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
         ]);
 
         $employee = Employee::findOrFail($validated['employee_id']);
@@ -136,10 +136,10 @@ class AttendanceController extends Controller
     public function checkOut(Request $request)
     {
         $validated = $request->validate([
-            'employee_id' => 'required|exists:employees,id',
-            'qr_code' => 'required|string',
-            'latitude' => 'required|numeric',
-            'longitude' => 'required|numeric',
+            'employee_id' => 'required|integer|exists:employees,id',
+            'qr_code' => 'required|string|max:255',
+            'latitude' => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
         ]);
 
         $employee = Employee::findOrFail($validated['employee_id']);

@@ -216,8 +216,8 @@ async function performCheckIn() {
         return;
     }
     
-    const employeeId = @json(session('employee_id'));
-    if (!employeeId) {
+    const employeeId = parseInt(@json(session('employee_id')));
+    if (!employeeId || isNaN(employeeId)) {
         document.getElementById('result').innerHTML = 
             '<div class="alert alert-danger">Erreur: Employé non identifié.</div>';
         return;
@@ -233,9 +233,9 @@ async function performCheckIn() {
         navigator.geolocation.getCurrentPosition(async (position) => {
             const data = {
                 employee_id: employeeId,
-                qr_code: scannedQrCode,
-                latitude: position.coords.latitude,
-                longitude: position.coords.longitude
+                qr_code: scannedQrCode.trim(),
+                latitude: parseFloat(position.coords.latitude),
+                longitude: parseFloat(position.coords.longitude)
             };
             
             try {
@@ -243,21 +243,33 @@ async function performCheckIn() {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
                     },
                     body: JSON.stringify(data)
                 });
                 
                 const resultData = await result.json();
                 
-                if (resultData.success) {
+                if (result.status === 422) {
+                    // Erreur de validation
+                    let errorMessage = 'Erreur de validation: ';
+                    if (resultData.errors) {
+                        const errors = Object.values(resultData.errors).flat();
+                        errorMessage = errors.join(', ');
+                    } else if (resultData.message) {
+                        errorMessage = resultData.message;
+                    }
+                    document.getElementById('result').innerHTML = 
+                        '<div class="alert alert-danger"><i class="bx bx-error-circle"></i> ' + errorMessage + '</div>';
+                } else if (resultData.success) {
                     document.getElementById('result').innerHTML = 
                         '<div class="alert alert-success"><i class="bx bx-check-circle"></i> ' + resultData.message + '</div>';
                     document.getElementById('action-buttons').style.display = 'none';
                     scannedQrCode = null;
                 } else {
                     document.getElementById('result').innerHTML = 
-                        '<div class="alert alert-danger"><i class="bx bx-error-circle"></i> ' + resultData.message + '</div>';
+                        '<div class="alert alert-danger"><i class="bx bx-error-circle"></i> ' + (resultData.message || 'Une erreur est survenue') + '</div>';
                 }
             } catch (error) {
                 document.getElementById('result').innerHTML = 
@@ -287,8 +299,8 @@ async function performCheckOut() {
         return;
     }
     
-    const employeeId = @json(session('employee_id'));
-    if (!employeeId) {
+    const employeeId = parseInt(@json(session('employee_id')));
+    if (!employeeId || isNaN(employeeId)) {
         document.getElementById('result').innerHTML = 
             '<div class="alert alert-danger">Erreur: Employé non identifié.</div>';
         return;
@@ -304,9 +316,9 @@ async function performCheckOut() {
         navigator.geolocation.getCurrentPosition(async (position) => {
             const data = {
                 employee_id: employeeId,
-                qr_code: scannedQrCode,
-                latitude: position.coords.latitude,
-                longitude: position.coords.longitude
+                qr_code: scannedQrCode.trim(),
+                latitude: parseFloat(position.coords.latitude),
+                longitude: parseFloat(position.coords.longitude)
             };
             
             try {
@@ -314,21 +326,33 @@ async function performCheckOut() {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
                     },
                     body: JSON.stringify(data)
                 });
                 
                 const resultData = await result.json();
                 
-                if (resultData.success) {
+                if (result.status === 422) {
+                    // Erreur de validation
+                    let errorMessage = 'Erreur de validation: ';
+                    if (resultData.errors) {
+                        const errors = Object.values(resultData.errors).flat();
+                        errorMessage = errors.join(', ');
+                    } else if (resultData.message) {
+                        errorMessage = resultData.message;
+                    }
+                    document.getElementById('result').innerHTML = 
+                        '<div class="alert alert-danger"><i class="bx bx-error-circle"></i> ' + errorMessage + '</div>';
+                } else if (resultData.success) {
                     document.getElementById('result').innerHTML = 
                         '<div class="alert alert-success"><i class="bx bx-check-circle"></i> ' + resultData.message + '</div>';
                     document.getElementById('action-buttons').style.display = 'none';
                     scannedQrCode = null;
                 } else {
                     document.getElementById('result').innerHTML = 
-                        '<div class="alert alert-danger"><i class="bx bx-error-circle"></i> ' + resultData.message + '</div>';
+                        '<div class="alert alert-danger"><i class="bx bx-error-circle"></i> ' + (resultData.message || 'Une erreur est survenue') + '</div>';
                 }
             } catch (error) {
                 document.getElementById('result').innerHTML = 
