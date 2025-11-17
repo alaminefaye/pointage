@@ -95,9 +95,9 @@ class BadgeController extends Controller
     {
         $badge->load('employee.department');
         
-        // Générer le QR code en SVG pour l'affichage
-        $qrCodeSvg = QrCode::size(300)
-            ->margin(2)
+        // Générer le QR code en SVG pour l'affichage (même taille que print)
+        $qrCodeSvg = QrCode::size(200)
+            ->margin(1)
             ->generate($badge->qr_code);
         
         return view('badges.show', compact('badge', 'qrCodeSvg'));
@@ -176,23 +176,10 @@ class BadgeController extends Controller
         $textWhite = imagecolorallocate($image, 255, 255, 255);
         $textDark = imagecolorallocate($image, 7, 65, 54);
         
-        // Fond vert
+        // Fond vert (tout le badge est vert)
         imagefilledrectangle($image, 0, 0, $width, $height, $greenDark);
         
-        // Header (haut vert)
-        $headerHeight = 70;
-        imagefilledrectangle($image, 0, 0, $width, $headerHeight, $greenDark);
-        
-        // Body (centre blanc)
-        $bodyY = $headerHeight;
-        $bodyHeight = $height - $headerHeight - 60;
-        imagefilledrectangle($image, 0, $bodyY, $width, $bodyY + $bodyHeight, $white);
-        
-        // Footer (bas vert)
-        $footerY = $bodyY + $bodyHeight;
-        imagefilledrectangle($image, 0, $footerY, $width, $height, $greenDark);
-        
-        // Logo GASPARD SIGNATURE
+        // Logo GASPARD SIGNATURE (en haut à gauche)
         imagestring($image, 5, 30, 20, 'GASPARD', $textWhite);
         imagestring($image, 3, 30, 45, 'SIGNATURE', $textWhite);
         
@@ -204,33 +191,34 @@ class BadgeController extends Controller
         imagefilledrectangle($image, $badgeNumberX - 10, 25, $badgeNumberX + $badgeNumberWidth, 50, $whiteSemi);
         imagestring($image, 3, $badgeNumberX, 30, $badgeNumberText, $textDark);
         
-        // Nom de l'employé (en majuscules)
+        // Nom de l'employé (en majuscules, dans le body)
+        $bodyY = 80;
         $employeeName = strtoupper($badge->employee->full_name);
-        imagestring($image, 5, 30, $bodyY + 25, $employeeName, $textDark);
+        imagestring($image, 5, 30, $bodyY, $employeeName, $textWhite);
         
         // Détails employé
-        $detailY = $bodyY + 75;
+        $detailY = $bodyY + 50;
         $lineHeight = 30;
         
         $codeText = 'Code: ' . $badge->employee->employee_code;
-        imagestring($image, 3, 30, $detailY, $codeText, $textDark);
+        imagestring($image, 3, 30, $detailY, $codeText, $textWhite);
         
         if ($badge->employee->position) {
             $posteText = 'Poste: ' . $badge->employee->position;
-            imagestring($image, 3, 30, $detailY + $lineHeight, $posteText, $textDark);
+            imagestring($image, 3, 30, $detailY + $lineHeight, $posteText, $textWhite);
         }
         
         if ($badge->employee->department) {
             $deptText = 'Dept: ' . $badge->employee->department->name;
             $deptY = $detailY + ($badge->employee->position ? $lineHeight * 2 : $lineHeight);
-            imagestring($image, 3, 30, $deptY, $deptText, $textDark);
+            imagestring($image, 3, 30, $deptY, $deptText, $textWhite);
         }
         
-        // QR Code (à droite, dans le body blanc)
+        // QR Code (à droite, dans le body vert)
         $qrCodeImage = imagecreatefromstring($qrCodePng);
         $qrSize = 140; // Taille du QR code dans le badge
         $qrX = $width - $qrSize - 40;
-        $qrY = $bodyY + 30;
+        $qrY = $bodyY + 20;
         
         // Fond blanc pour le QR code
         imagefilledrectangle($image, $qrX - 5, $qrY - 5, $qrX + $qrSize + 5, $qrY + $qrSize + 5, $white);
@@ -243,18 +231,18 @@ class BadgeController extends Controller
         $scanText = 'SCAN ME';
         $scanTextWidth = imagefontwidth(2) * strlen($scanText);
         $scanTextX = $qrX + ($qrSize / 2) - ($scanTextWidth / 2);
-        imagestring($image, 2, $scanTextX, $qrY + $qrSize + 8, $scanText, $textDark);
+        imagestring($image, 2, $scanTextX, $qrY + $qrSize + 8, $scanText, $textWhite);
         
-        // Footer - Département
+        // Footer - Département et Validité
+        $footerY = $height - 40;
         $departmentName = strtoupper($badge->employee->department->name ?? 'N/A');
-        imagestring($image, 3, 30, $footerY + 20, $departmentName, $textWhite);
+        imagestring($image, 3, 30, $footerY, $departmentName, $textWhite);
         
-        // Footer - Validité
         $validityText = $badge->expires_at 
             ? 'Valide jusqu\'au ' . $badge->expires_at->format('m/Y')
             : 'Valide indefiniment';
         $validityWidth = imagefontwidth(2) * strlen($validityText);
-        imagestring($image, 2, $width - $validityWidth - 30, $footerY + 20, $validityText, $textWhite);
+        imagestring($image, 2, $width - $validityWidth - 30, $footerY, $validityText, $textWhite);
         
         // Output
         ob_start();

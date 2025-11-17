@@ -146,10 +146,10 @@
         
         .qr-code-wrapper svg {
             display: block;
-            width: 100%;
-            height: 100%;
-            max-width: 47px;
-            max-height: 47px;
+            width: 47px !important;
+            height: 47px !important;
+            max-width: 47px !important;
+            max-height: 47px !important;
         }
         
         .qr-label {
