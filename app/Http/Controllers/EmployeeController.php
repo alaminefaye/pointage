@@ -13,10 +13,34 @@ class EmployeeController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $employees = Employee::with('department')->paginate(20);
-        return view('employees.index', compact('employees'));
+        $query = Employee::with('department');
+        
+        // Filtre par nom, email ou code
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                  ->orWhere('last_name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('employee_code', 'like', "%{$search}%");
+            });
+        }
+        
+        // Filtre par département
+        if ($request->filled('department_id')) {
+            $query->where('department_id', $request->department_id);
+        }
+        
+        // Filtre par statut
+        if ($request->filled('status')) {
+            $query->where('is_active', $request->status === 'active');
+        }
+        
+        $employees = $query->orderBy('first_name')->paginate(20)->appends($request->query());
+        $departments = \App\Models\Department::all();
+        return view('employees.index', compact('employees', 'departments'));
     }
 
     /**

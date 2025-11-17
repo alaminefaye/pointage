@@ -11,6 +11,39 @@
         </a>
     </div>
     <div class="card-body">
+        <!-- Search Section -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h6 class="mb-3"><i class="bx bx-search"></i> Recherche</h6>
+                <form method="GET" action="{{ route('sites.index') }}" class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Recherche</label>
+                        <input type="text" class="form-control" name="search" value="{{ request('search') }}" placeholder="Nom, adresse...">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Statut</label>
+                        <select class="form-select" name="status">
+                            <option value="">Tous</option>
+                            <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Actif</option>
+                            <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactif</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bx bx-search"></i> Rechercher
+                        </button>
+                    </div>
+                    @if(request()->hasAny(['search', 'status']))
+                    <div class="col-md-3 d-flex align-items-end">
+                        <a href="{{ route('sites.index') }}" class="btn btn-secondary w-100">
+                            <i class="bx bx-x"></i> Réinitialiser
+                        </a>
+                    </div>
+                    @endif
+                </form>
+            </div>
+        </div>
+        
         <div class="table-responsive">
             <table class="table table-bordered">
                 <thead>

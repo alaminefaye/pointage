@@ -12,9 +12,25 @@ class SiteController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $sites = Site::paginate(20);
+        $query = Site::query();
+        
+        // Filtre par nom
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('address', 'like', "%{$search}%");
+            });
+        }
+        
+        // Filtre par statut
+        if ($request->filled('status')) {
+            $query->where('is_active', $request->status === 'active');
+        }
+        
+        $sites = $query->orderBy('name')->paginate(20)->appends($request->query());
         return view('sites.index', compact('sites'));
     }
 

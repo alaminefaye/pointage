@@ -31,7 +31,7 @@ class AttendanceController extends Controller
     /**
      * Display today's attendance statistics.
      */
-    public function today()
+    public function today(Request $request)
     {
         $today = Carbon::today();
         
@@ -55,11 +55,49 @@ class AttendanceController extends Controller
             ->distinct('employee_id')
             ->count('employee_id');
         
-        // Liste des pointages du jour (avec pagination)
-        $todayRecords = AttendanceRecord::with('employee.department', 'site')
-            ->whereDate('date', $today)
-            ->orderBy('check_in_time', 'desc')
-            ->paginate(20);
+        // Liste des pointages du jour (avec pagination et filtres)
+        $query = AttendanceRecord::with('employee.department', 'site')
+            ->whereDate('date', $today);
+        
+        // Filtres
+        if ($request->filled('employee_id')) {
+            $query->where('employee_id', $request->employee_id);
+        }
+        
+        if ($request->filled('department_id')) {
+            $query->whereHas('employee', function($q) use ($request) {
+                $q->where('department_id', $request->department_id);
+            });
+        }
+        
+        if ($request->filled('site_id')) {
+            $query->where('site_id', $request->site_id);
+        }
+        
+        if ($request->filled('status')) {
+            if ($request->status === 'checked_in') {
+                $query->whereNotNull('check_in_time')->whereNull('check_out_time');
+            } elseif ($request->status === 'checked_out') {
+                $query->whereNotNull('check_in_time')->whereNotNull('check_out_time');
+            } elseif ($request->status === 'absent') {
+                $query->where('is_absent', true);
+            }
+        }
+        
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('employee', function($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                  ->orWhere('last_name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+        
+        $todayRecords = $query->orderBy('check_in_time', 'desc')->paginate(20)->appends($request->query());
+        
+        $employees = Employee::where('is_active', true)->orderBy('first_name')->get();
+        $departments = \App\Models\Department::all();
+        $sites = \App\Models\Site::where('is_active', true)->get();
         
         return view('attendance.today', compact(
             'totalEmployees',
@@ -67,7 +105,10 @@ class AttendanceController extends Controller
             'checkedOut',
             'onRest',
             'todayRecords',
-            'today'
+            'today',
+            'employees',
+            'departments',
+            'sites'
         ));
     }
 
