@@ -137,131 +137,141 @@
         @push('page-css')
         <style>
             .badge-preview-container {
-                width: 85.6mm;
-                height: 53.98mm;
-                min-width: 324px;
-                min-height: 204px;
-                background: linear-gradient(135deg, #074136 0%, #0a5a4a 100%);
-                border-radius: 8px;
-                padding: 12px;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-                position: relative;
-                overflow: hidden;
-                margin: 0 auto;
-                color: white;
+                width: 85.6mm !important;
+                height: 53.98mm !important;
+                min-width: 324px !important;
+                min-height: 204px !important;
+                background: linear-gradient(135deg, #074136 0%, #0a5a4a 100%) !important;
+                border-radius: 8px !important;
+                padding: 12px !important;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+                position: relative !important;
+                overflow: hidden !important;
+                margin: 0 auto !important;
+                color: white !important;
+                box-sizing: border-box !important;
             }
             
             .badge-preview-container::before {
-                content: '';
-                position: absolute;
-                top: -50%;
-                right: -50%;
-                width: 200%;
-                height: 200%;
-                background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-                pointer-events: none;
+                content: '' !important;
+                position: absolute !important;
+                top: -50% !important;
+                right: -50% !important;
+                width: 200% !important;
+                height: 200% !important;
+                background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%) !important;
+                pointer-events: none !important;
             }
             
             .badge-preview-container .badge-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 8px;
-                position: relative;
-                z-index: 1;
+                display: flex !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+                margin-bottom: 8px !important;
+                position: relative !important;
+                z-index: 1 !important;
             }
             
             .badge-preview-container .logo-section {
-                display: flex;
-                align-items: center;
+                display: flex !important;
+                align-items: center !important;
             }
             
             .badge-preview-container .logo-text {
-                font-family: 'Georgia', 'Times New Roman', serif;
-                font-size: 14px;
-                font-weight: bold;
-                letter-spacing: 0.5px;
-                line-height: 1.2;
+                font-family: 'Georgia', 'Times New Roman', serif !important;
+                font-size: 14px !important;
+                font-weight: bold !important;
+                letter-spacing: 0.5px !important;
+                line-height: 1.2 !important;
+                color: white !important;
             }
             
             .badge-preview-container .logo-sub {
-                font-family: 'Arial', sans-serif;
-                font-size: 7px;
-                font-weight: normal;
-                letter-spacing: 1.5px;
-                margin-top: 1px;
-                opacity: 0.9;
+                font-family: 'Arial', sans-serif !important;
+                font-size: 7px !important;
+                font-weight: normal !important;
+                letter-spacing: 1.5px !important;
+                margin-top: 1px !important;
+                opacity: 0.9 !important;
+                color: white !important;
             }
             
             .badge-preview-container .badge-number {
-                background: rgba(255, 255, 255, 0.2);
-                padding: 4px 8px;
-                border-radius: 4px;
-                font-size: 9px;
-                font-weight: bold;
-                letter-spacing: 0.5px;
+                background: rgba(255, 255, 255, 0.2) !important;
+                padding: 4px 8px !important;
+                border-radius: 4px !important;
+                font-size: 9px !important;
+                font-weight: bold !important;
+                letter-spacing: 0.5px !important;
+                color: white !important;
             }
             
             .badge-preview-container .badge-body {
-                display: flex;
-                gap: 10px;
-                position: relative;
-                z-index: 1;
+                display: flex !important;
+                gap: 10px !important;
+                position: relative !important;
+                z-index: 1 !important;
+                flex-direction: row !important;
             }
             
             .badge-preview-container .employee-info {
-                flex: 1;
+                flex: 1 !important;
+                min-width: 0 !important;
             }
             
             .badge-preview-container .employee-name {
-                font-size: 16px;
-                font-weight: bold;
-                margin-bottom: 4px;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
+                font-size: 16px !important;
+                font-weight: bold !important;
+                margin-bottom: 4px !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.5px !important;
+                color: white !important;
             }
             
             .badge-preview-container .employee-details {
-                font-size: 9px;
-                line-height: 1.4;
-                opacity: 0.95;
+                font-size: 9px !important;
+                line-height: 1.4 !important;
+                opacity: 0.95 !important;
+                color: white !important;
             }
             
             .badge-preview-container .employee-detail-item {
-                margin-bottom: 2px;
+                margin-bottom: 2px !important;
+                color: white !important;
             }
             
             .badge-preview-container .employee-detail-label {
-                font-weight: bold;
-                display: inline-block;
-                width: 50px;
+                font-weight: bold !important;
+                display: inline-block !important;
+                width: 50px !important;
+                color: white !important;
             }
             
             .badge-preview-container .qr-section {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                flex-shrink: 0;
-                width: 60px;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                justify-content: center !important;
+                flex-shrink: 0 !important;
+                width: 60px !important;
             }
             
             .badge-preview-container .qr-code-wrapper {
-                background: white;
-                padding: 4px;
-                border-radius: 4px;
-                margin-bottom: 4px;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-                width: 55px;
-                height: 55px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                overflow: hidden;
+                background: white !important;
+                padding: 4px !important;
+                border-radius: 4px !important;
+                margin-bottom: 4px !important;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+                width: 55px !important;
+                height: 55px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                overflow: hidden !important;
             }
             
             .badge-preview-container .qr-code-wrapper svg {
-                display: block;
+                display: block !important;
                 width: 47px !important;
                 height: 47px !important;
                 max-width: 47px !important;
@@ -269,32 +279,35 @@
             }
             
             .badge-preview-container .qr-label {
-                font-size: 7px;
-                text-align: center;
-                opacity: 0.9;
-                margin-top: 2px;
+                font-size: 7px !important;
+                text-align: center !important;
+                opacity: 0.9 !important;
+                margin-top: 2px !important;
+                color: white !important;
             }
             
             .badge-preview-container .badge-footer {
-                margin-top: 8px;
-                padding-top: 6px;
-                border-top: 1px solid rgba(255, 255, 255, 0.3);
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                font-size: 8px;
-                position: relative;
-                z-index: 1;
+                margin-top: 8px !important;
+                padding-top: 6px !important;
+                border-top: 1px solid rgba(255, 255, 255, 0.3) !important;
+                display: flex !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+                font-size: 8px !important;
+                position: relative !important;
+                z-index: 1 !important;
             }
             
             .badge-preview-container .department {
-                font-weight: bold;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
+                font-weight: bold !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.5px !important;
+                color: white !important;
             }
             
             .badge-preview-container .validity {
-                opacity: 0.8;
+                opacity: 0.8 !important;
+                color: white !important;
             }
         </style>
         @endpush
