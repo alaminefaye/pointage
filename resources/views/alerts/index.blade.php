@@ -63,6 +63,25 @@
 
 @push('page-js')
 <script>
+// Update unread alerts count (make it available globally)
+async function updateUnreadAlerts() {
+    try {
+        const response = await fetch('{{ route("alerts.unread-count") }}');
+        const data = await response.json();
+        const countEl = document.getElementById('unread-alerts-count');
+        if (countEl) {
+            countEl.textContent = data.count;
+            if (data.count > 0) {
+                countEl.style.display = 'inline-block';
+            } else {
+                countEl.style.display = 'none';
+            }
+        }
+    } catch (error) {
+        console.error('Error updating alerts:', error);
+    }
+}
+
 function markAsRead(alertId) {
     fetch(`/alerts/${alertId}/read`, {
         method: 'POST',
@@ -70,7 +89,12 @@ function markAsRead(alertId) {
             'X-CSRF-TOKEN': '{{ csrf_token() }}',
             'Content-Type': 'application/json'
         }
-    }).then(() => location.reload());
+    }).then(() => {
+        // Update the badge count
+        updateUnreadAlerts();
+        // Reload to update the table
+        location.reload();
+    });
 }
 
 function markAllAsRead() {
@@ -80,7 +104,12 @@ function markAllAsRead() {
             'X-CSRF-TOKEN': '{{ csrf_token() }}',
             'Content-Type': 'application/json'
         }
-    }).then(() => location.reload());
+    }).then(() => {
+        // Update the badge count
+        updateUnreadAlerts();
+        // Reload to update the table
+        location.reload();
+    });
 }
 </script>
 @endpush

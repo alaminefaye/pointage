@@ -142,6 +142,9 @@
                         </tbody>
                     </table>
                 </div>
+                <div class="mt-3">
+                    {{ $todayRecords->links() }}
+                </div>
             @else
                 <div class="alert alert-info">
                     <i class="bx bx-info-circle"></i> Aucun pointage enregistré pour aujourd'hui.

@@ -137,7 +137,10 @@
                         <a href="{{ route('alerts.index') }}" class="menu-link">
                             <i class="menu-icon tf-icons bx bx-bell"></i>
                             <div data-i18n="Alerts">Alertes</div>
-                            <span class="badge bg-label-danger ms-auto" id="unread-alerts-count">0</span>
+                            @php
+                                $unreadCount = \App\Models\Alert::where('is_read', false)->count();
+                            @endphp
+                            <span class="badge bg-label-danger ms-auto" id="unread-alerts-count" style="display: {{ $unreadCount > 0 ? 'inline-block' : 'none' }};">{{ $unreadCount }}</span>
                         </a>
                     </li>
                     
@@ -307,6 +310,34 @@
     
     <!-- Page JS -->
     @stack('page-js')
+    
+    <!-- Update unread alerts count -->
+    <script>
+    // Update unread alerts count
+    async function updateUnreadAlerts() {
+        try {
+            const response = await fetch('{{ route("alerts.unread-count") }}');
+            const data = await response.json();
+            const countEl = document.getElementById('unread-alerts-count');
+            if (countEl) {
+                countEl.textContent = data.count;
+                if (data.count > 0) {
+                    countEl.style.display = 'inline-block';
+                } else {
+                    countEl.style.display = 'none';
+                }
+            }
+        } catch (error) {
+            console.error('Error updating alerts:', error);
+        }
+    }
+
+    // Update on page load
+    updateUnreadAlerts();
+    
+    // Update every minute
+    setInterval(updateUnreadAlerts, 60000);
+    </script>
 </body>
 </html>
 

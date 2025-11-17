@@ -55,11 +55,11 @@ class AttendanceController extends Controller
             ->distinct('employee_id')
             ->count('employee_id');
         
-        // Liste des pointages du jour
+        // Liste des pointages du jour (avec pagination)
         $todayRecords = AttendanceRecord::with('employee.department', 'site')
             ->whereDate('date', $today)
             ->orderBy('check_in_time', 'desc')
-            ->get();
+            ->paginate(20);
         
         return view('attendance.today', compact(
             'totalEmployees',

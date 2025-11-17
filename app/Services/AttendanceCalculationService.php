@@ -56,6 +56,16 @@ class AttendanceCalculationService
             'late_minutes' => 0,
         ]);
 
+        // Vérifier si l'employé n'a pas fait ses heures standard (moins que requis)
+        $totalHours = $totalMinutes / 60;
+        $standardHours = $employee->standard_hours_per_day;
+        
+        if ($totalHours < $standardHours) {
+            // Créer une alerte pour heures insuffisantes
+            $missingHours = $standardHours - $totalHours;
+            $this->createInsufficientHoursAlert($employee, $record, $totalHours, $standardHours, $missingHours);
+        }
+
         // Create alert if overtime threshold exceeded
         // Use employee's threshold if set, otherwise use global threshold
         $overtimeThreshold = $employee->overtime_threshold_hours 
@@ -211,6 +221,26 @@ class AttendanceCalculationService
             'severity' => 'error',
             'metadata' => [
                 'date' => $date->format('Y-m-d'),
+            ],
+        ]);
+    }
+
+    /**
+     * Create insufficient hours alert.
+     */
+    private function createInsufficientHoursAlert(Employee $employee, AttendanceRecord $record, float $totalHours, float $standardHours, float $missingHours): void
+    {
+        Alert::create([
+            'employee_id' => $employee->id,
+            'type' => 'system',
+            'title' => 'Heures de travail insuffisantes',
+            'message' => "L'employé {$employee->full_name} a travaillé seulement " . round($totalHours, 2) . "h le {$record->date->format('d/m/Y')} au lieu des {$standardHours}h requises. Il manque " . round($missingHours, 2) . "h de travail.",
+            'severity' => 'warning',
+            'metadata' => [
+                'attendance_record_id' => $record->id,
+                'total_hours' => $totalHours,
+                'standard_hours' => $standardHours,
+                'missing_hours' => $missingHours,
             ],
         ]);
     }
