@@ -14,7 +14,7 @@
                 <li>Cliquez sur "Démarrer le scanner" pour activer votre caméra</li>
                 <li>Autorisez l'accès à la caméra lorsque votre navigateur le demande</li>
                 <li>Pointez votre caméra vers le QR code affiché sur l'écran de l'admin</li>
-                <li>Le pointage se fera automatiquement une fois le QR code détecté</li>
+                <li>Après avoir scanné le QR code, choisissez "Entrée" ou "Sortie" selon votre besoin</li>
             </ul>
         </div>
         
@@ -37,6 +37,24 @@
         </div>
         
         <div id="result" class="mt-3"></div>
+        
+        <!-- Boutons Entrée/Sortie après scan -->
+        <div id="action-buttons" class="text-center mt-4" style="display: none;">
+            <div class="alert alert-success mb-3">
+                <i class="bx bx-check-circle"></i> QR Code scanné avec succès ! Choisissez votre action :
+            </div>
+            <div class="d-flex gap-3 justify-content-center">
+                <button id="btn-check-in" class="btn btn-primary btn-lg">
+                    <i class="bx bx-log-in"></i> Entrée
+                </button>
+                <button id="btn-check-out" class="btn btn-warning btn-lg">
+                    <i class="bx bx-log-out"></i> Sortie
+                </button>
+            </div>
+            <button id="btn-rescan" class="btn btn-secondary btn-sm mt-3">
+                <i class="bx bx-refresh"></i> Scanner à nouveau
+            </button>
+        </div>
     </div>
 </div>
 
@@ -45,9 +63,13 @@
 <script>
 let video, canvas, context;
 let scanning = false;
+let scannedQrCode = null; // Stocker le QR code scanné
 
 document.getElementById('start-scanner').addEventListener('click', startScanner);
 document.getElementById('stop-scanner').addEventListener('click', stopScanner);
+document.getElementById('btn-check-in').addEventListener('click', () => performCheckIn());
+document.getElementById('btn-check-out').addEventListener('click', () => performCheckOut());
+document.getElementById('btn-rescan').addEventListener('click', rescan);
 
 async function startScanner() {
     try {
@@ -140,6 +162,15 @@ function stopScanner() {
     document.getElementById('start-scanner').style.display = 'inline-block';
     document.getElementById('stop-scanner').style.display = 'none';
     document.getElementById('result').innerHTML = '';
+    document.getElementById('action-buttons').style.display = 'none';
+    scannedQrCode = null;
+}
+
+function rescan() {
+    document.getElementById('action-buttons').style.display = 'none';
+    document.getElementById('result').innerHTML = '';
+    scannedQrCode = null;
+    startScanner();
 }
 
 function scanQR() {
@@ -153,35 +184,62 @@ function scanQR() {
         const code = jsQR(imageData.data, imageData.width, imageData.height);
         
         if (code) {
-            handleQRCode(code.data);
-            stopScanner();
+            scannedQrCode = code.data;
+            handleQRCodeScanned(code.data);
+            // Arrêter le scanner mais garder le QR code
+            scanning = false;
+            if (video && video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+            }
+            if (video) {
+                video.style.display = 'none';
+            }
+            document.getElementById('video-placeholder').style.display = 'flex';
+            document.getElementById('start-scanner').style.display = 'inline-block';
+            document.getElementById('stop-scanner').style.display = 'none';
         }
     }
     
     requestAnimationFrame(scanQR);
 }
 
-async function handleQRCode(qrData) {
-    const employeeId = {{ session('employee_id') }};
+function handleQRCodeScanned(qrData) {
+    // Afficher les boutons d'action
+    document.getElementById('action-buttons').style.display = 'block';
+    document.getElementById('result').innerHTML = '';
+}
+
+async function performCheckIn() {
+    if (!scannedQrCode) {
+        document.getElementById('result').innerHTML = 
+            '<div class="alert alert-danger">Aucun QR code scanné. Veuillez scanner à nouveau.</div>';
+        return;
+    }
+    
+    const employeeId = @json(session('employee_id'));
+    if (!employeeId) {
+        document.getElementById('result').innerHTML = 
+            '<div class="alert alert-danger">Erreur: Employé non identifié.</div>';
+        return;
+    }
+    
+    // Désactiver les boutons pendant le traitement
+    document.getElementById('btn-check-in').disabled = true;
+    document.getElementById('btn-check-out').disabled = true;
+    document.getElementById('result').innerHTML = '<div class="alert alert-info"><i class="bx bx-loader-alt bx-spin"></i> Traitement en cours...</div>';
     
     // Get current location
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(async (position) => {
             const data = {
                 employee_id: employeeId,
-                qr_code: qrData,
+                qr_code: scannedQrCode,
                 latitude: position.coords.latitude,
                 longitude: position.coords.longitude
             };
             
-            // Determine if check-in or check-out
-            const response = await fetch('{{ route("attendance.today-status") }}?employee_id=' + employeeId);
-            const status = await response.json();
-            
-            const endpoint = status.has_checked_in ? '{{ route("attendance.check-out") }}' : '{{ route("attendance.check-in") }}';
-            
             try {
-                const result = await fetch(endpoint, {
+                const result = await fetch('{{ route("attendance.check-in") }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -194,22 +252,102 @@ async function handleQRCode(qrData) {
                 
                 if (resultData.success) {
                     document.getElementById('result').innerHTML = 
-                        '<div class="alert alert-success">' + resultData.message + '</div>';
+                        '<div class="alert alert-success"><i class="bx bx-check-circle"></i> ' + resultData.message + '</div>';
+                    document.getElementById('action-buttons').style.display = 'none';
+                    scannedQrCode = null;
                 } else {
                     document.getElementById('result').innerHTML = 
-                        '<div class="alert alert-danger">' + resultData.message + '</div>';
+                        '<div class="alert alert-danger"><i class="bx bx-error-circle"></i> ' + resultData.message + '</div>';
                 }
             } catch (error) {
                 document.getElementById('result').innerHTML = 
-                    '<div class="alert alert-danger">Erreur: ' + error.message + '</div>';
+                    '<div class="alert alert-danger"><i class="bx bx-error-circle"></i> Erreur: ' + error.message + '</div>';
+            } finally {
+                document.getElementById('btn-check-in').disabled = false;
+                document.getElementById('btn-check-out').disabled = false;
             }
         }, (error) => {
             document.getElementById('result').innerHTML = 
-                '<div class="alert alert-danger">Erreur de géolocalisation: ' + error.message + '</div>';
+                '<div class="alert alert-danger"><i class="bx bx-error-circle"></i> Erreur de géolocalisation: ' + error.message + '</div>';
+            document.getElementById('btn-check-in').disabled = false;
+            document.getElementById('btn-check-out').disabled = false;
         });
     } else {
         document.getElementById('result').innerHTML = 
-            '<div class="alert alert-danger">La géolocalisation n\'est pas supportée par votre navigateur.</div>';
+            '<div class="alert alert-danger"><i class="bx bx-error-circle"></i> La géolocalisation n\'est pas supportée par votre navigateur.</div>';
+        document.getElementById('btn-check-in').disabled = false;
+        document.getElementById('btn-check-out').disabled = false;
+    }
+}
+
+async function performCheckOut() {
+    if (!scannedQrCode) {
+        document.getElementById('result').innerHTML = 
+            '<div class="alert alert-danger">Aucun QR code scanné. Veuillez scanner à nouveau.</div>';
+        return;
+    }
+    
+    const employeeId = @json(session('employee_id'));
+    if (!employeeId) {
+        document.getElementById('result').innerHTML = 
+            '<div class="alert alert-danger">Erreur: Employé non identifié.</div>';
+        return;
+    }
+    
+    // Désactiver les boutons pendant le traitement
+    document.getElementById('btn-check-in').disabled = true;
+    document.getElementById('btn-check-out').disabled = true;
+    document.getElementById('result').innerHTML = '<div class="alert alert-info"><i class="bx bx-loader-alt bx-spin"></i> Traitement en cours...</div>';
+    
+    // Get current location
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(async (position) => {
+            const data = {
+                employee_id: employeeId,
+                qr_code: scannedQrCode,
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude
+            };
+            
+            try {
+                const result = await fetch('{{ route("attendance.check-out") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const resultData = await result.json();
+                
+                if (resultData.success) {
+                    document.getElementById('result').innerHTML = 
+                        '<div class="alert alert-success"><i class="bx bx-check-circle"></i> ' + resultData.message + '</div>';
+                    document.getElementById('action-buttons').style.display = 'none';
+                    scannedQrCode = null;
+                } else {
+                    document.getElementById('result').innerHTML = 
+                        '<div class="alert alert-danger"><i class="bx bx-error-circle"></i> ' + resultData.message + '</div>';
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML = 
+                    '<div class="alert alert-danger"><i class="bx bx-error-circle"></i> Erreur: ' + error.message + '</div>';
+            } finally {
+                document.getElementById('btn-check-in').disabled = false;
+                document.getElementById('btn-check-out').disabled = false;
+            }
+        }, (error) => {
+            document.getElementById('result').innerHTML = 
+                '<div class="alert alert-danger"><i class="bx bx-error-circle"></i> Erreur de géolocalisation: ' + error.message + '</div>';
+            document.getElementById('btn-check-in').disabled = false;
+            document.getElementById('btn-check-out').disabled = false;
+        });
+    } else {
+        document.getElementById('result').innerHTML = 
+            '<div class="alert alert-danger"><i class="bx bx-error-circle"></i> La géolocalisation n\'est pas supportée par votre navigateur.</div>';
+        document.getElementById('btn-check-in').disabled = false;
+        document.getElementById('btn-check-out').disabled = false;
     }
 }
 </script>
