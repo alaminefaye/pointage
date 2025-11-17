@@ -10,7 +10,7 @@
 
     <!-- Statistics Cards -->
     <div class="row mb-4">
-        <div class="col-lg-3 col-md-6 mb-4">
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
             <div class="card">
                 <div class="card-body">
                     <div class="card-title d-flex align-items-start justify-content-between">
@@ -25,7 +25,7 @@
             </div>
         </div>
         
-        <div class="col-lg-3 col-md-6 mb-4">
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
             <div class="card">
                 <div class="card-body">
                     <div class="card-title d-flex align-items-start justify-content-between">
@@ -40,7 +40,7 @@
             </div>
         </div>
         
-        <div class="col-lg-3 col-md-6 mb-4">
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
             <div class="card">
                 <div class="card-body">
                     <div class="card-title d-flex align-items-start justify-content-between">
@@ -55,7 +55,7 @@
             </div>
         </div>
         
-        <div class="col-lg-3 col-md-6 mb-4">
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
             <div class="card">
                 <div class="card-body">
                     <div class="card-title d-flex align-items-start justify-content-between">
@@ -65,6 +65,21 @@
                     </div>
                     <span class="fw-semibold d-block mb-1">Au Repos</span>
                     <h3 class="card-title mb-2">{{ $onRest }}</h3>
+                    <small class="text-muted">Aujourd'hui</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="card-title d-flex align-items-start justify-content-between">
+                        <div class="avatar flex-shrink-0">
+                            <i class="bx bx-x-circle text-danger" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                    <span class="fw-semibold d-block mb-1">Absents</span>
+                    <h3 class="card-title mb-2">{{ $absent }}</h3>
                     <small class="text-muted">Aujourd'hui</small>
                 </div>
             </div>
@@ -126,6 +141,8 @@
                                 <option value="checked_in" {{ request('status') == 'checked_in' ? 'selected' : '' }}>En cours</option>
                                 <option value="checked_out" {{ request('status') == 'checked_out' ? 'selected' : '' }}>Complet</option>
                                 <option value="absent" {{ request('status') == 'absent' ? 'selected' : '' }}>Absent</option>
+                                <option value="rest" {{ request('status') == 'rest' ? 'selected' : '' }}>Au Repos</option>
+                                <option value="none" {{ request('status') == 'none' ? 'selected' : '' }}>Sans statut</option>
                             </select>
                         </div>
                         <div class="col-md-1 d-flex align-items-end">
@@ -143,7 +160,7 @@
                     </form>
                 </div>
             </div>
-            @if($todayRecords->count() > 0)
+            @if($employeeStatusesPaginated->count() > 0)
                 <div class="table-responsive">
                     <table class="table table-striped">
                         <thead>
@@ -158,49 +175,68 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($todayRecords as $record)
+                            @foreach($employeeStatusesPaginated as $item)
+                                @php
+                                    $employee = $item['employee'];
+                                    $status = $item['status'];
+                                    $attendance = $item['attendance'];
+                                @endphp
                                 <tr>
                                     <td>
-                                        <strong>{{ $record->employee->full_name }}</strong>
+                                        <strong>{{ $employee->full_name }}</strong>
                                     </td>
-                                    <td>{{ $record->employee->department->name ?? '-' }}</td>
-                                    <td>{{ $record->site->name ?? '-' }}</td>
+                                    <td>{{ $employee->department->name ?? '-' }}</td>
+                                    <td>{{ $attendance && $attendance->site ? $attendance->site->name : '-' }}</td>
                                     <td>
-                                        @if($record->check_in_time)
+                                        @if($attendance && $attendance->check_in_time)
                                             <span class="badge bg-label-success">
-                                                {{ \Carbon\Carbon::parse($record->check_in_time)->format('H:i') }}
+                                                {{ \Carbon\Carbon::parse($attendance->check_in_time)->format('H:i') }}
                                             </span>
                                         @else
                                             <span class="badge bg-label-secondary">-</span>
                                         @endif
                                     </td>
                                     <td>
-                                        @if($record->check_out_time)
+                                        @if($attendance && $attendance->check_out_time)
                                             <span class="badge bg-label-warning">
-                                                {{ \Carbon\Carbon::parse($record->check_out_time)->format('H:i') }}
+                                                {{ \Carbon\Carbon::parse($attendance->check_out_time)->format('H:i') }}
                                             </span>
+                                        @elseif($attendance && $attendance->check_in_time)
+                                            <span class="badge bg-label-info">En cours</span>
                                         @else
-                                            <span class="badge bg-label-secondary">En cours</span>
+                                            <span class="badge bg-label-secondary">-</span>
                                         @endif
                                     </td>
                                     <td>
-                                        @if($record->check_in_time && $record->check_out_time)
-                                            {{ number_format($record->total_minutes / 60, 1) }}h
-                                        @elseif($record->check_in_time)
+                                        @if($attendance && $attendance->check_in_time && $attendance->check_out_time)
+                                            {{ number_format($attendance->total_minutes / 60, 1) }}h
+                                        @elseif($attendance && $attendance->check_in_time)
                                             <span class="text-muted">En cours...</span>
                                         @else
                                             -
                                         @endif
                                     </td>
                                     <td>
-                                        @if($record->is_absent)
-                                            <span class="badge bg-label-danger">Absent</span>
-                                        @elseif($record->check_in_time && !$record->check_out_time)
-                                            <span class="badge bg-label-info">En cours</span>
-                                        @elseif($record->check_in_time && $record->check_out_time)
-                                            <span class="badge bg-label-success">Complet</span>
+                                        @if($status === 'rest')
+                                            <span class="badge bg-label-info">
+                                                <i class="bx bx-bed"></i> Au Repos
+                                            </span>
+                                        @elseif($status === 'absent')
+                                            <span class="badge bg-label-danger">
+                                                <i class="bx bx-x-circle"></i> Absent
+                                            </span>
+                                        @elseif($status === 'checked_in')
+                                            <span class="badge bg-label-info">
+                                                <i class="bx bx-log-in"></i> En cours
+                                            </span>
+                                        @elseif($status === 'checked_out')
+                                            <span class="badge bg-label-success">
+                                                <i class="bx bx-check-circle"></i> Complet
+                                            </span>
                                         @else
-                                            <span class="badge bg-label-secondary">-</span>
+                                            <span class="badge bg-label-secondary">
+                                                <i class="bx bx-minus-circle"></i> Sans statut
+                                            </span>
                                         @endif
                                     </td>
                                 </tr>
@@ -209,11 +245,11 @@
                     </table>
                 </div>
                 <div class="mt-3">
-                    {{ $todayRecords->links() }}
+                    {{ $employeeStatusesPaginated->links() }}
                 </div>
             @else
                 <div class="alert alert-info">
-                    <i class="bx bx-info-circle"></i> Aucun pointage enregistré pour aujourd'hui.
+                    <i class="bx bx-info-circle"></i> Aucun employé trouvé pour aujourd'hui.
                 </div>
             @endif
         </div>

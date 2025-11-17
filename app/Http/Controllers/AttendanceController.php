@@ -55,45 +55,111 @@ class AttendanceController extends Controller
             ->distinct('employee_id')
             ->count('employee_id');
         
-        // Liste des pointages du jour (avec pagination et filtres)
-        $query = AttendanceRecord::with('employee.department', 'site')
-            ->whereDate('date', $today);
+        // Total absents (qui ont is_absent = true mais ne sont PAS en repos)
+        // Récupérer les IDs des employés en repos aujourd'hui
+        $restDayEmployeeIds = \App\Models\EmployeeRestDay::whereDate('date', $today)
+            ->pluck('employee_id')
+            ->toArray();
         
-        // Filtres
+        // Compter les absents qui ne sont pas en repos
+        $absent = AttendanceRecord::whereDate('date', $today)
+            ->where('is_absent', true)
+            ->whereNotIn('employee_id', $restDayEmployeeIds)
+            ->distinct()
+            ->count('employee_id');
+        
+        // Récupérer tous les employés actifs avec leurs statuts pour aujourd'hui
+        $employeesQuery = Employee::where('is_active', true)
+            ->with(['department'])
+            ->with(['attendanceRecords' => function($q) use ($today) {
+                $q->whereDate('date', $today);
+            }])
+            ->with(['restDays' => function($q) use ($today) {
+                $q->whereDate('date', $today);
+            }]);
+        
+        // Filtres sur les employés
         if ($request->filled('employee_id')) {
-            $query->where('employee_id', $request->employee_id);
+            $employeesQuery->where('id', $request->employee_id);
         }
         
         if ($request->filled('department_id')) {
-            $query->whereHas('employee', function($q) use ($request) {
-                $q->where('department_id', $request->department_id);
-            });
-        }
-        
-        if ($request->filled('site_id')) {
-            $query->where('site_id', $request->site_id);
-        }
-        
-        if ($request->filled('status')) {
-            if ($request->status === 'checked_in') {
-                $query->whereNotNull('check_in_time')->whereNull('check_out_time');
-            } elseif ($request->status === 'checked_out') {
-                $query->whereNotNull('check_in_time')->whereNotNull('check_out_time');
-            } elseif ($request->status === 'absent') {
-                $query->where('is_absent', true);
-            }
+            $employeesQuery->where('department_id', $request->department_id);
         }
         
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->whereHas('employee', function($q) use ($search) {
+            $employeesQuery->where(function($q) use ($search) {
                 $q->where('first_name', 'like', "%{$search}%")
                   ->orWhere('last_name', 'like', "%{$search}%")
                   ->orWhere('email', 'like', "%{$search}%");
             });
         }
         
-        $todayRecords = $query->orderBy('check_in_time', 'desc')->paginate(20)->appends($request->query());
+        $allEmployees = $employeesQuery->orderBy('first_name')->get();
+        
+        // Construire la liste avec les statuts
+        $employeeStatuses = [];
+        foreach ($allEmployees as $employee) {
+            $attendance = $employee->attendanceRecords->first();
+            $isRestDay = $employee->restDays->isNotEmpty();
+            
+            $status = 'none';
+            $attendanceRecord = null;
+            
+            if ($isRestDay) {
+                $status = 'rest';
+            } elseif ($attendance) {
+                if ($attendance->is_absent) {
+                    $status = 'absent';
+                } elseif ($attendance->check_in_time && $attendance->check_out_time) {
+                    $status = 'checked_out';
+                } elseif ($attendance->check_in_time) {
+                    $status = 'checked_in';
+                } else {
+                    $status = 'none';
+                }
+                $attendanceRecord = $attendance;
+            } else {
+                $status = 'none';
+            }
+            
+            // Filtrer par statut si demandé
+            if ($request->filled('status')) {
+                if ($request->status === 'checked_in' && $status !== 'checked_in') continue;
+                if ($request->status === 'checked_out' && $status !== 'checked_out') continue;
+                if ($request->status === 'absent' && $status !== 'absent') continue;
+                if ($request->status === 'rest' && $status !== 'rest') continue;
+            }
+            
+            // Filtrer par site si demandé
+            if ($request->filled('site_id') && $attendanceRecord && $attendanceRecord->site_id != $request->site_id) {
+                continue;
+            }
+            
+            $employeeStatuses[] = [
+                'employee' => $employee,
+                'status' => $status,
+                'attendance' => $attendanceRecord,
+            ];
+        }
+        
+        // Pagination manuelle
+        $perPage = 20;
+        $currentPage = $request->get('page', 1);
+        $offset = ($currentPage - 1) * $perPage;
+        $items = collect($employeeStatuses);
+        $total = $items->count();
+        $paginatedItems = $items->slice($offset, $perPage)->values();
+        
+        // Créer un paginator personnalisé
+        $employeeStatusesPaginated = new \Illuminate\Pagination\LengthAwarePaginator(
+            $paginatedItems,
+            $total,
+            $perPage,
+            $currentPage,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
         
         $employees = Employee::where('is_active', true)->orderBy('first_name')->get();
         $departments = \App\Models\Department::all();
@@ -104,7 +170,8 @@ class AttendanceController extends Controller
             'checkedIn',
             'checkedOut',
             'onRest',
-            'todayRecords',
+            'absent',
+            'employeeStatusesPaginated',
             'today',
             'employees',
             'departments',
