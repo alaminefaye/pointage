@@ -92,8 +92,16 @@
                         </a>
                     </li>
                     
+                    <!-- Today's Attendance -->
+                    <li class="menu-item {{ request()->routeIs('attendance.today') ? 'active' : '' }}">
+                        <a href="{{ route('attendance.today') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-calendar-check"></i>
+                            <div data-i18n="Today Attendance">Pointages du Jour</div>
+                        </a>
+                    </li>
+                    
                     <!-- Attendance -->
-                    <li class="menu-item {{ request()->routeIs('attendance.*') ? 'active' : '' }}">
+                    <li class="menu-item {{ request()->routeIs('attendance.index') ? 'active' : '' }}">
                         <a href="{{ route('attendance.index') }}" class="menu-link">
                             <i class="menu-icon tf-icons bx bx-time"></i>
                             <div data-i18n="Attendance">Pointage</div>

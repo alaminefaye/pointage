@@ -58,6 +58,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('employees', EmployeeController::class);
     
     // Attendance
+    Route::get('/attendance/today', [AttendanceController::class, 'today'])->name('attendance.today');
     Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
     // Note: check-in, check-out, and today-status routes are also available for employees below
     
