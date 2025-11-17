@@ -124,6 +124,14 @@
                         </a>
                     </li>
                     
+                    <!-- Badges -->
+                    <li class="menu-item {{ request()->routeIs('badges.*') ? 'active' : '' }}">
+                        <a href="{{ route('badges.index') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-id-card"></i>
+                            <div data-i18n="Badges">Badges</div>
+                        </a>
+                    </li>
+                    
                     <!-- Reports -->
                     <li class="menu-item {{ request()->routeIs('reports.*') ? 'active' : '' }}">
                         <a href="{{ route('reports.index') }}" class="menu-link">

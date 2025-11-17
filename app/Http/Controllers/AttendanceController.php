@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AttendanceRecord;
 use App\Models\Employee;
 use App\Models\Alert;
+use App\Models\Badge;
 use App\Services\GeolocationService;
 use App\Services\QrCodeService;
 use App\Services\AttendanceCalculationService;
@@ -471,5 +472,217 @@ class AttendanceController extends Controller
             'has_checked_in' => $attendance && $attendance->check_in_time ? true : false,
             'has_checked_out' => $attendance && $attendance->check_out_time ? true : false,
         ]);
+    }
+
+    /**
+     * Scan badge QR code for attendance (check-in or check-out).
+     * This method is used when an employee scans their badge QR code.
+     */
+    public function badgeScan(Request $request)
+    {
+        $validated = $request->validate([
+            'badge_qr_code' => 'required|string|max:255',
+            'site_qr_code' => 'required|string|max:255', // QR code du site pour validation
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+        ]);
+
+        // Trouver le badge par son QR code
+        $badge = Badge::where('qr_code', $validated['badge_qr_code'])
+            ->where('is_active', true)
+            ->first();
+
+        if (!$badge) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Badge introuvable ou inactif.',
+            ], 404);
+        }
+
+        // Vérifier que le badge n'est pas expiré
+        if ($badge->isExpired()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ce badge a expiré.',
+            ], 403);
+        }
+
+        $employee = $badge->employee;
+
+        // Vérifier que l'employé est actif
+        if (!$employee->is_active) {
+            return response()->json([
+                'success' => false,
+                'message' => 'L\'employé associé à ce badge n\'est pas actif.',
+            ], 403);
+        }
+
+        // Valider le QR code du site
+        $siteQrCode = $this->qrCodeService->validateAndUseQrCode($validated['site_qr_code'], $employee->id);
+        if (!$siteQrCode) {
+            return response()->json([
+                'success' => false,
+                'message' => 'QR code du site invalide ou expiré.',
+            ], 400);
+        }
+
+        // Vérifier la géolocalisation si fournie
+        if ($request->filled('latitude') && $request->filled('longitude')) {
+            $isInZone = $this->geolocationService->isInAllowedZone(
+                $siteQrCode->site_id,
+                $validated['latitude'],
+                $validated['longitude']
+            );
+
+            if (!$isInZone) {
+                $site = \App\Models\Site::find($siteQrCode->site_id);
+                $distance = $this->geolocationService->getDistanceToZone(
+                    $siteQrCode->site_id,
+                    $validated['latitude'],
+                    $validated['longitude']
+                );
+                
+                $message = 'Vous êtes hors de la zone autorisée. Pointage bloqué.';
+                if ($distance !== null && $site) {
+                    if ($distance < 1000) {
+                        $message = sprintf(
+                            'Vous êtes à %d mètres du site (zone autorisée: %d mètres). Pointage bloqué.',
+                            (int) $distance,
+                            (int) $site->radius
+                        );
+                    } else {
+                        $distanceKm = round($distance / 1000, 2);
+                        $radiusKm = round($site->radius / 1000, 2);
+                        $message = sprintf(
+                            'Vous êtes à %.2f km du site (zone autorisée: %.2f km). Pointage bloqué.',
+                            $distanceKm,
+                            $radiusKm
+                        );
+                    }
+                }
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                ], 403);
+            }
+        }
+
+        $today = Carbon::today();
+        $yesterday = Carbon::yesterday();
+
+        // Vérifier le statut actuel de l'employé
+        $existingAttendance = AttendanceRecord::where('employee_id', $employee->id)
+            ->where(function($query) use ($today, $yesterday) {
+                $query->where('date', $today)
+                      ->orWhere(function($q) use ($yesterday) {
+                          $q->where('date', $yesterday)
+                            ->whereNotNull('check_in_time')
+                            ->whereNull('check_out_time');
+                      });
+            })
+            ->first();
+
+        // Déterminer si c'est un check-in ou check-out
+        if ($existingAttendance && $existingAttendance->check_in_time && !$existingAttendance->check_out_time) {
+            // Check-out
+            // Vérifier si c'est un travail de nuit (check-in hier, check-out aujourd'hui)
+            $attendanceDate = $existingAttendance->date;
+            if ($attendanceDate->isYesterday()) {
+                // C'est un check-out pour un travail de nuit
+                $existingAttendance->update([
+                    'check_out_time' => now()->format('H:i:s'),
+                    'latitude' => $validated['latitude'] ?? null,
+                    'longitude' => $validated['longitude'] ?? null,
+                    'is_in_zone' => $request->filled('latitude') && $request->filled('longitude'),
+                    'qr_code_used' => $validated['site_qr_code'],
+                ]);
+            } else {
+                // Check-out normal
+                $existingAttendance->update([
+                    'check_out_time' => now()->format('H:i:s'),
+                    'latitude' => $validated['latitude'] ?? null,
+                    'longitude' => $validated['longitude'] ?? null,
+                    'is_in_zone' => $request->filled('latitude') && $request->filled('longitude'),
+                    'qr_code_used' => $validated['site_qr_code'],
+                ]);
+            }
+
+            // Calculer l'attendance
+            $this->calculationService->calculateAttendance($existingAttendance->fresh());
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pointage de sortie enregistré avec succès.',
+                'type' => 'check_out',
+                'attendance' => $existingAttendance->fresh(),
+            ]);
+        } else {
+            // Check-in
+            // Vérifier si l'employé a déjà pointé l'entrée aujourd'hui ou hier
+            $existingCheckIn = AttendanceRecord::where('employee_id', $employee->id)
+                ->where(function($query) use ($today, $yesterday) {
+                    $query->where('date', $today)
+                          ->orWhere(function($q) use ($yesterday) {
+                              $q->where('date', $yesterday)
+                                ->whereNotNull('check_in_time')
+                                ->whereNull('check_out_time');
+                          });
+                })
+                ->whereNotNull('check_in_time')
+                ->first();
+
+            if ($existingCheckIn) {
+                $firstCheckInTime = \Carbon\Carbon::parse($existingCheckIn->check_in_time)->format('H:i');
+                $firstCheckInDate = $existingCheckIn->date->format('d/m/Y');
+                
+                Alert::create([
+                    'employee_id' => $employee->id,
+                    'type' => 'system',
+                    'title' => 'Double pointage d\'entrée détecté',
+                    'message' => "L'employé {$employee->full_name} a tenté de pointer l'entrée deux fois via badge. Premier pointage: {$firstCheckInTime} le {$firstCheckInDate}.",
+                    'severity' => 'error',
+                ]);
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => "Vous avez déjà pointé l'entrée à {$firstCheckInTime} le {$firstCheckInDate}.",
+                ], 400);
+            }
+
+            // Créer ou mettre à jour l'enregistrement de pointage
+            $attendance = AttendanceRecord::firstOrCreate(
+                [
+                    'employee_id' => $employee->id,
+                    'date' => $today,
+                ],
+                [
+                    'site_id' => $siteQrCode->site_id,
+                    'check_in_time' => now()->format('H:i:s'),
+                    'latitude' => $validated['latitude'] ?? null,
+                    'longitude' => $validated['longitude'] ?? null,
+                    'is_in_zone' => $request->filled('latitude') && $request->filled('longitude'),
+                    'qr_code_used' => $validated['site_qr_code'],
+                ]
+            );
+
+            if (!$attendance->check_in_time) {
+                $attendance->update([
+                    'site_id' => $siteQrCode->site_id,
+                    'check_in_time' => now()->format('H:i:s'),
+                    'latitude' => $validated['latitude'] ?? null,
+                    'longitude' => $validated['longitude'] ?? null,
+                    'is_in_zone' => $request->filled('latitude') && $request->filled('longitude'),
+                    'qr_code_used' => $validated['site_qr_code'],
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pointage d\'entrée enregistré avec succès.',
+                'type' => 'check_in',
+                'attendance' => $attendance->fresh(),
+            ]);
+        }
     }
 }

@@ -85,6 +85,14 @@ class Employee extends Authenticatable
     }
 
     /**
+     * Get the badges for the employee.
+     */
+    public function badges(): HasMany
+    {
+        return $this->hasMany(Badge::class);
+    }
+
+    /**
      * Check if a specific date is a rest day for this employee.
      */
     public function isRestDay(Carbon $date): bool

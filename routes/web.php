@@ -15,6 +15,7 @@ use App\Http\Controllers\SiteController;
 use App\Http\Controllers\OvertimeController;
 use App\Http\Controllers\EmployeeRestDayController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\BadgeController;
 
 // Admin Authentication Routes
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -41,6 +42,9 @@ Route::middleware(['auth.employee.or.admin'])->group(function () {
     Route::post('/attendance/check-out', [AttendanceController::class, 'checkOut'])->name('attendance.check-out');
     Route::get('/attendance/today-status', [AttendanceController::class, 'getTodayStatus'])->name('attendance.today-status');
 });
+
+// Badge scanning route (public route for badge QR code scanning)
+Route::post('/attendance/badge-scan', [AttendanceController::class, 'badgeScan'])->name('attendance.badge-scan');
 
 // Admin Protected Routes
 Route::middleware(['auth'])->group(function () {
@@ -98,6 +102,11 @@ Route::middleware(['auth'])->group(function () {
     
     // Users (Administration)
     Route::resource('users', UserController::class);
+    
+    // Badges
+    Route::resource('badges', BadgeController::class);
+    Route::get('/badges/{badge}/download-qr', [BadgeController::class, 'downloadQrCode'])->name('badges.download-qr');
+    Route::post('/badges/{badge}/toggle-status', [BadgeController::class, 'toggleStatus'])->name('badges.toggle-status');
 });
 
 // API Routes for employee attendance (can be called from mobile app)
