@@ -64,6 +64,8 @@ Route::middleware(['auth'])->group(function () {
     // Attendance
     Route::get('/attendance/today', [AttendanceController::class, 'today'])->name('attendance.today');
     Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
+    Route::get('/attendance/badge-scanner', [AttendanceController::class, 'badgeScanner'])->name('attendance.badge-scanner');
+    Route::post('/attendance/scan-badge-admin', [AttendanceController::class, 'scanBadgeByAdmin'])->name('attendance.scan-badge-admin');
     // Note: check-in, check-out, and today-status routes are also available for employees below
     
     // QR Codes

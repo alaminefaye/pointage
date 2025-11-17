@@ -677,10 +677,165 @@ class AttendanceController extends Controller
                 ]);
             }
 
+        return response()->json([
+            'success' => true,
+            'message' => 'Pointage d\'entrée enregistré avec succès.',
+            'type' => 'check_in',
+            'attendance' => $attendance->fresh(),
+        ]);
+    }
+
+    /**
+     * Display badge scanner page for admins.
+     * Allows admins to scan employee badges to mark attendance.
+     */
+    public function badgeScanner()
+    {
+        $sites = \App\Models\Site::where('is_active', true)->get();
+        return view('attendance.badge-scanner', compact('sites'));
+    }
+
+    /**
+     * Process badge scan by admin.
+     * Scans employee badge and automatically marks check-in or check-out.
+     */
+    public function scanBadgeByAdmin(Request $request)
+    {
+        $validated = $request->validate([
+            'badge_qr_code' => 'required|string|max:255',
+            'site_id' => 'required|exists:sites,id',
+        ]);
+
+        // Trouver le badge par son QR code
+        $badge = Badge::where('qr_code', $validated['badge_qr_code'])
+            ->where('is_active', true)
+            ->first();
+
+        if (!$badge) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Badge introuvable ou inactif.',
+            ], 404);
+        }
+
+        // Vérifier que le badge n'est pas expiré
+        if ($badge->isExpired()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ce badge a expiré.',
+            ], 403);
+        }
+
+        $employee = $badge->employee;
+
+        // Vérifier que l'employé est actif
+        if (!$employee->is_active) {
+            return response()->json([
+                'success' => false,
+                'message' => 'L\'employé associé à ce badge n\'est pas actif.',
+            ], 403);
+        }
+
+        $today = Carbon::today();
+        $yesterday = Carbon::yesterday();
+
+        // Vérifier le statut actuel de l'employé
+        $existingAttendance = AttendanceRecord::where('employee_id', $employee->id)
+            ->where(function($query) use ($today, $yesterday) {
+                $query->where('date', $today)
+                      ->orWhere(function($q) use ($yesterday) {
+                          $q->where('date', $yesterday)
+                            ->whereNotNull('check_in_time')
+                            ->whereNull('check_out_time');
+                      });
+            })
+            ->first();
+
+        // Déterminer si c'est un check-in ou check-out
+        if ($existingAttendance && $existingAttendance->check_in_time && !$existingAttendance->check_out_time) {
+            // Check-out
+            $attendanceDate = $existingAttendance->date;
+            if ($attendanceDate->isYesterday()) {
+                // C'est un check-out pour un travail de nuit
+                $existingAttendance->update([
+                    'check_out_time' => now()->format('H:i:s'),
+                    'site_id' => $validated['site_id'],
+                ]);
+            } else {
+                // Check-out normal
+                $existingAttendance->update([
+                    'check_out_time' => now()->format('H:i:s'),
+                    'site_id' => $validated['site_id'],
+                ]);
+            }
+
+            // Calculer l'attendance
+            $this->calculationService->calculateAttendance($existingAttendance->fresh());
+
             return response()->json([
                 'success' => true,
-                'message' => 'Pointage d\'entrée enregistré avec succès.',
+                'message' => "Pointage de sortie enregistré pour {$employee->full_name}.",
+                'type' => 'check_out',
+                'employee' => $employee,
+                'attendance' => $existingAttendance->fresh(),
+            ]);
+        } else {
+            // Check-in
+            // Vérifier si l'employé a déjà pointé l'entrée aujourd'hui ou hier
+            $existingCheckIn = AttendanceRecord::where('employee_id', $employee->id)
+                ->where(function($query) use ($today, $yesterday) {
+                    $query->where('date', $today)
+                          ->orWhere(function($q) use ($yesterday) {
+                              $q->where('date', $yesterday)
+                                ->whereNotNull('check_in_time')
+                                ->whereNull('check_out_time');
+                          });
+                })
+                ->whereNotNull('check_in_time')
+                ->first();
+
+            if ($existingCheckIn) {
+                $firstCheckInTime = Carbon::parse($existingCheckIn->check_in_time)->format('H:i');
+                $firstCheckInDate = $existingCheckIn->date->format('d/m/Y');
+                
+                Alert::create([
+                    'employee_id' => $employee->id,
+                    'type' => 'system',
+                    'title' => 'Double pointage d\'entrée détecté',
+                    'message' => "L'employé {$employee->full_name} a tenté de pointer l'entrée deux fois via badge. Premier pointage: {$firstCheckInTime} le {$firstCheckInDate}.",
+                    'severity' => 'error',
+                ]);
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => "{$employee->full_name} a déjà pointé l'entrée à {$firstCheckInTime} le {$firstCheckInDate}.",
+                ], 400);
+            }
+
+            // Créer ou mettre à jour l'enregistrement de pointage
+            $attendance = AttendanceRecord::firstOrCreate(
+                [
+                    'employee_id' => $employee->id,
+                    'date' => $today,
+                ],
+                [
+                    'site_id' => $validated['site_id'],
+                    'check_in_time' => now()->format('H:i:s'),
+                ]
+            );
+
+            if (!$attendance->check_in_time) {
+                $attendance->update([
+                    'site_id' => $validated['site_id'],
+                    'check_in_time' => now()->format('H:i:s'),
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "Pointage d'entrée enregistré pour {$employee->full_name}.",
                 'type' => 'check_in',
+                'employee' => $employee,
                 'attendance' => $attendance->fresh(),
             ]);
         }

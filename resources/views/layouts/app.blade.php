@@ -132,6 +132,14 @@
                         </a>
                     </li>
                     
+                    <!-- Badge Scanner -->
+                    <li class="menu-item {{ request()->routeIs('attendance.badge-scanner') ? 'active' : '' }}">
+                        <a href="{{ route('attendance.badge-scanner') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-qr-scan"></i>
+                            <div data-i18n="Scanner Badges">Scanner Badges</div>
+                        </a>
+                    </li>
+                    
                     <!-- Reports -->
                     <li class="menu-item {{ request()->routeIs('reports.*') ? 'active' : '' }}">
                         <a href="{{ route('reports.index') }}" class="menu-link">
