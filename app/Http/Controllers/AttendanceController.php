@@ -677,12 +677,13 @@ class AttendanceController extends Controller
                 ]);
             }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Pointage d\'entrée enregistré avec succès.',
-            'type' => 'check_in',
-            'attendance' => $attendance->fresh(),
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Pointage d\'entrée enregistré avec succès.',
+                'type' => 'check_in',
+                'attendance' => $attendance->fresh(),
+            ]);
+        }
     }
 
     /**
