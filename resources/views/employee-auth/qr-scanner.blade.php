@@ -264,9 +264,14 @@ async function performCheckIn() {
                         '<div class="alert alert-danger"><i class="bx bx-error-circle"></i> ' + errorMessage + '</div>';
                 } else if (resultData.success) {
                     document.getElementById('result').innerHTML = 
-                        '<div class="alert alert-success"><i class="bx bx-check-circle"></i> ' + resultData.message + '</div>';
+                        '<div class="alert alert-success"><i class="bx bx-check-circle"></i> ' + resultData.message + '<br><small>Redirection vers l\'historique...</small></div>';
                     document.getElementById('action-buttons').style.display = 'none';
                     scannedQrCode = null;
+                    
+                    // Rediriger vers l'historique de pointage après 2 secondes
+                    setTimeout(() => {
+                        window.location.href = '{{ route("employee.attendance-history") }}';
+                    }, 2000);
                 } else {
                     document.getElementById('result').innerHTML = 
                         '<div class="alert alert-danger"><i class="bx bx-error-circle"></i> ' + (resultData.message || 'Une erreur est survenue') + '</div>';
@@ -347,9 +352,14 @@ async function performCheckOut() {
                         '<div class="alert alert-danger"><i class="bx bx-error-circle"></i> ' + errorMessage + '</div>';
                 } else if (resultData.success) {
                     document.getElementById('result').innerHTML = 
-                        '<div class="alert alert-success"><i class="bx bx-check-circle"></i> ' + resultData.message + '</div>';
+                        '<div class="alert alert-success"><i class="bx bx-check-circle"></i> ' + resultData.message + '<br><small>Redirection vers l\'historique...</small></div>';
                     document.getElementById('action-buttons').style.display = 'none';
                     scannedQrCode = null;
+                    
+                    // Rediriger vers l'historique de pointage après 2 secondes
+                    setTimeout(() => {
+                        window.location.href = '{{ route("employee.attendance-history") }}';
+                    }, 2000);
                 } else {
                     document.getElementById('result').innerHTML = 
                         '<div class="alert alert-danger"><i class="bx bx-error-circle"></i> ' + (resultData.message || 'Une erreur est survenue') + '</div>';

@@ -88,9 +88,35 @@ class AttendanceController extends Controller
         );
 
         if (!$isInZone) {
+            $site = \App\Models\Site::find($qrCode->site_id);
+            $distance = $this->geolocationService->getDistanceToZone(
+                $qrCode->site_id,
+                $validated['latitude'],
+                $validated['longitude']
+            );
+            
+            $message = 'Vous êtes hors de la zone autorisée. Pointage bloqué.';
+            if ($distance !== null && $site) {
+                $distanceKm = round($distance / 1000, 2);
+                $radiusKm = round($site->radius / 1000, 2);
+                if ($distance < 1000) {
+                    $message = sprintf(
+                        'Vous êtes à %d mètres du site (zone autorisée: %d mètres). Pointage bloqué.',
+                        (int) $distance,
+                        (int) $site->radius
+                    );
+                } else {
+                    $message = sprintf(
+                        'Vous êtes à %.2f km du site (zone autorisée: %.2f km). Pointage bloqué.',
+                        $distanceKm,
+                        $radiusKm
+                    );
+                }
+            }
+            
             return response()->json([
                 'success' => false,
-                'message' => 'Vous êtes hors de la zone autorisée. Pointage bloqué.',
+                'message' => $message,
             ], 403);
         }
 
@@ -161,9 +187,35 @@ class AttendanceController extends Controller
         );
 
         if (!$isInZone) {
+            $site = \App\Models\Site::find($qrCode->site_id);
+            $distance = $this->geolocationService->getDistanceToZone(
+                $qrCode->site_id,
+                $validated['latitude'],
+                $validated['longitude']
+            );
+            
+            $message = 'Vous êtes hors de la zone autorisée. Pointage bloqué.';
+            if ($distance !== null && $site) {
+                $distanceKm = round($distance / 1000, 2);
+                $radiusKm = round($site->radius / 1000, 2);
+                if ($distance < 1000) {
+                    $message = sprintf(
+                        'Vous êtes à %d mètres du site (zone autorisée: %d mètres). Pointage bloqué.',
+                        (int) $distance,
+                        (int) $site->radius
+                    );
+                } else {
+                    $message = sprintf(
+                        'Vous êtes à %.2f km du site (zone autorisée: %.2f km). Pointage bloqué.',
+                        $distanceKm,
+                        $radiusKm
+                    );
+                }
+            }
+            
             return response()->json([
                 'success' => false,
-                'message' => 'Vous êtes hors de la zone autorisée. Pointage bloqué.',
+                'message' => $message,
             ], 403);
         }
 
