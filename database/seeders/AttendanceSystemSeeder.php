@@ -37,9 +37,8 @@ class AttendanceSystemSeeder extends Seeder
                 'password' => Hash::make('password'),
                 'department_id' => 1,
                 'position' => 'Manager RH',
-                'standard_start_time' => '08:00:00',
-                'standard_end_time' => '17:00:00',
                 'standard_hours_per_day' => 8,
+                'overtime_threshold_hours' => 10,
                 'is_active' => true,
             ],
             [
@@ -50,9 +49,8 @@ class AttendanceSystemSeeder extends Seeder
                 'password' => Hash::make('password'),
                 'department_id' => 2,
                 'position' => 'Développeuse',
-                'standard_start_time' => '09:00:00',
-                'standard_end_time' => '18:00:00',
                 'standard_hours_per_day' => 8,
+                'overtime_threshold_hours' => 10,
                 'is_active' => true,
             ],
         ];
@@ -62,10 +60,11 @@ class AttendanceSystemSeeder extends Seeder
         }
 
         // Set default geolocation (example coordinates - update with your actual location)
-        AttendanceSetting::setValue('allowed_latitude', '14.7167');
-        AttendanceSetting::setValue('allowed_longitude', '-17.4677');
-        AttendanceSetting::setValue('allowed_radius', '50');
-        AttendanceSetting::setValue('overtime_threshold_hours', '10');
+        // null = paramètres globaux (non spécifiques à un site)
+        AttendanceSetting::setValue(null, 'allowed_latitude', '14.7167');
+        AttendanceSetting::setValue(null, 'allowed_longitude', '-17.4677');
+        AttendanceSetting::setValue(null, 'allowed_radius', '50');
+        AttendanceSetting::setValue(null, 'overtime_threshold_hours', '10');
     }
 }
 

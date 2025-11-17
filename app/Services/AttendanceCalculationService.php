@@ -21,8 +21,16 @@ class AttendanceCalculationService
             return;
         }
 
-        $checkIn = Carbon::parse($record->date . ' ' . $record->check_in_time);
-        $checkOut = Carbon::parse($record->date . ' ' . $record->check_out_time);
+        // Convertir les heures en format string si nécessaire
+        $checkInTime = $record->check_in_time instanceof \DateTime 
+            ? $record->check_in_time->format('H:i:s') 
+            : (string) $record->check_in_time;
+        $checkOutTime = $record->check_out_time instanceof \DateTime 
+            ? $record->check_out_time->format('H:i:s') 
+            : (string) $record->check_out_time;
+        
+        $checkIn = Carbon::parse($record->date->format('Y-m-d') . ' ' . $checkInTime);
+        $checkOut = Carbon::parse($record->date->format('Y-m-d') . ' ' . $checkOutTime);
         
         // Si le check_out est avant le check_in (ex: 17h -> 01h), 
         // cela signifie que le check_out est le lendemain
