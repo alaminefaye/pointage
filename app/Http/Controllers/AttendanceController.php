@@ -55,19 +55,6 @@ class AttendanceController extends Controller
             ->distinct('employee_id')
             ->count('employee_id');
         
-        // Total absents (qui ont is_absent = true mais ne sont PAS en repos)
-        // Récupérer les IDs des employés en repos aujourd'hui
-        $restDayEmployeeIds = \App\Models\EmployeeRestDay::whereDate('date', $today)
-            ->pluck('employee_id')
-            ->toArray();
-        
-        // Compter les absents qui ne sont pas en repos
-        $absent = AttendanceRecord::whereDate('date', $today)
-            ->where('is_absent', true)
-            ->whereNotIn('employee_id', $restDayEmployeeIds)
-            ->distinct()
-            ->count('employee_id');
-        
         // Récupérer tous les employés actifs avec leurs statuts pour aujourd'hui
         $employeesQuery = Employee::where('is_active', true)
             ->with(['department'])
@@ -170,7 +157,6 @@ class AttendanceController extends Controller
             'checkedIn',
             'checkedOut',
             'onRest',
-            'absent',
             'employeeStatusesPaginated',
             'today',
             'employees',
