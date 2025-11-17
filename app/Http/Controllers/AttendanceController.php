@@ -777,7 +777,11 @@ class AttendanceController extends Controller
                 'success' => true,
                 'message' => "Pointage de sortie enregistré pour {$employee->full_name}.",
                 'type' => 'check_out',
-                'employee' => $employee,
+                'employee' => [
+                    'id' => $employee->id,
+                    'full_name' => $employee->full_name,
+                    'employee_code' => $employee->employee_code,
+                ],
                 'attendance' => $existingAttendance->fresh(),
             ]);
         } else {
@@ -836,7 +840,11 @@ class AttendanceController extends Controller
                 'success' => true,
                 'message' => "Pointage d'entrée enregistré pour {$employee->full_name}.",
                 'type' => 'check_in',
-                'employee' => $employee,
+                'employee' => [
+                    'id' => $employee->id,
+                    'full_name' => $employee->full_name,
+                    'employee_code' => $employee->employee_code,
+                ],
                 'attendance' => $attendance->fresh(),
             ]);
         }
