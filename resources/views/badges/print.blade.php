@@ -126,18 +126,30 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0;
+            width: 60px;
         }
         
         .qr-code-wrapper {
             background: white;
-            padding: 6px;
+            padding: 4px;
             border-radius: 4px;
             margin-bottom: 4px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            width: 55px;
+            height: 55px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
         }
         
         .qr-code-wrapper svg {
             display: block;
+            width: 100%;
+            height: 100%;
+            max-width: 47px;
+            max-height: 47px;
         }
         
         .qr-label {
@@ -187,20 +199,18 @@
             }
         }
         
-        /* Page layout for multiple badges */
+        /* Page layout for badge */
         .print-page {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-            max-width: 210mm;
-            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: calc(100vh - 200px);
             padding: 20px;
         }
         
         @media print {
             .print-page {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 10mm;
+                min-height: 100vh;
                 padding: 10mm;
             }
         }
@@ -263,62 +273,6 @@
     </div>
     
     <div class="print-page">
-        <!-- Badge 1 -->
-        <div class="badge-container">
-            <div class="badge-header">
-                <div class="logo-section">
-                    <div>
-                        <div class="logo-text">GASPARD</div>
-                        <div class="logo-sub">SIGNATURE</div>
-                    </div>
-                </div>
-                <div class="badge-number">#{{ $badge->badge_number }}</div>
-            </div>
-            
-            <div class="badge-body">
-                <div class="employee-info">
-                    <div class="employee-name">{{ $badge->employee->full_name }}</div>
-                    <div class="employee-details">
-                        <div class="employee-detail-item">
-                            <span class="employee-detail-label">Code:</span>
-                            <span>{{ $badge->employee->employee_code }}</span>
-                        </div>
-                        @if($badge->employee->position)
-                        <div class="employee-detail-item">
-                            <span class="employee-detail-label">Poste:</span>
-                            <span>{{ $badge->employee->position }}</span>
-                        </div>
-                        @endif
-                        @if($badge->employee->department)
-                        <div class="employee-detail-item">
-                            <span class="employee-detail-label">Dépt:</span>
-                            <span>{{ $badge->employee->department->name }}</span>
-                        </div>
-                        @endif
-                    </div>
-                </div>
-                
-                <div class="qr-section">
-                    <div class="qr-code-wrapper">
-                        {!! $qrCodeSvg !!}
-                    </div>
-                    <div class="qr-label">SCAN ME</div>
-                </div>
-            </div>
-            
-            <div class="badge-footer">
-                <div class="department">{{ $badge->employee->department->name ?? 'N/A' }}</div>
-                <div class="validity">
-                    @if($badge->expires_at)
-                        Valide jusqu'au {{ $badge->expires_at->format('m/Y') }}
-                    @else
-                        Valide indéfiniment
-                    @endif
-                </div>
-            </div>
-        </div>
-        
-        <!-- Badge 2 (duplicate for printing) -->
         <div class="badge-container">
             <div class="badge-header">
                 <div class="logo-section">
