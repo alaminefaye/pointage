@@ -153,16 +153,20 @@ class BadgeController extends Controller
     {
         $badge->load('employee.department');
         
-        // Générer le QR code en SVG pour l'affichage
-        $qrCodeSvg = QrCode::size(200)
+        // Générer le QR code en PNG base64 pour le PDF (DomPDF supporte mieux PNG que SVG)
+        $qrCodePng = QrCode::format('png')
+            ->size(200)
             ->margin(1)
             ->generate($badge->qr_code);
         
+        $qrCodeBase64 = base64_encode($qrCodePng);
+        
         // Générer le PDF avec le même design que print.blade.php
-        $pdf = Pdf::loadView('badges.badge-pdf', compact('badge', 'qrCodeSvg'));
+        $pdf = Pdf::loadView('badges.badge-pdf', compact('badge', 'qrCodeBase64'));
         
         // Définir la taille de page personnalisée pour le badge (85.6mm x 53.98mm)
-        $pdf->setPaper([0, 0, 323.15, 203.97], 'custom'); // 85.6mm = 323.15pt, 53.98mm = 203.97pt (1mm = 2.83465pt)
+        // 1mm = 2.83465pt, donc 85.6mm = 242.6pt et 53.98mm = 153.1pt
+        $pdf->setPaper([0, 0, 242.6, 153.1], 'custom');
         
         $fileName = 'Badge-' . $badge->badge_number . '-' . $badge->id . '.pdf';
         
