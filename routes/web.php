@@ -35,6 +35,13 @@ Route::middleware(['employee.session'])->group(function () {
     Route::get('/employee/attendance-history', [EmployeeAuthController::class, 'attendanceHistory'])->name('employee.attendance-history');
 });
 
+// Attendance routes accessible by both employees and admins
+Route::middleware(['auth.employee.or.admin'])->group(function () {
+    Route::post('/attendance/check-in', [AttendanceController::class, 'checkIn'])->name('attendance.check-in');
+    Route::post('/attendance/check-out', [AttendanceController::class, 'checkOut'])->name('attendance.check-out');
+    Route::get('/attendance/today-status', [AttendanceController::class, 'getTodayStatus'])->name('attendance.today-status');
+});
+
 // Admin Protected Routes
 Route::middleware(['auth'])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
@@ -52,9 +59,7 @@ Route::middleware(['auth'])->group(function () {
     
     // Attendance
     Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
-    Route::post('/attendance/check-in', [AttendanceController::class, 'checkIn'])->name('attendance.check-in');
-    Route::post('/attendance/check-out', [AttendanceController::class, 'checkOut'])->name('attendance.check-out');
-    Route::get('/attendance/today-status', [AttendanceController::class, 'getTodayStatus'])->name('attendance.today-status');
+    // Note: check-in, check-out, and today-status routes are also available for employees below
     
     // QR Codes
     Route::get('/qr-code/current', [QrCodeController::class, 'getCurrent'])->name('qr-code.current');

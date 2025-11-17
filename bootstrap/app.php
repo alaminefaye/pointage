@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Register employee session middleware
         $middleware->alias([
             'employee.session' => \App\Http\Middleware\EmployeeSessionMiddleware::class,
+            'auth.employee.or.admin' => \App\Http\Middleware\AuthenticateEmployeeOrAdmin::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
