@@ -7,7 +7,8 @@
     <meta name="description" content="@yield('description', '')" />
     
     <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="{{ asset('assets/img/favicon/favicon.ico') }}" />
+    <link rel="icon" type="image/svg+xml" href="{{ asset('assets/img/favicon/favicon.svg') }}" />
+    <link rel="alternate icon" type="image/x-icon" href="{{ asset('assets/img/favicon/favicon.ico') }}" />
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -129,6 +130,14 @@
                             <i class="menu-icon tf-icons bx bx-bell"></i>
                             <div data-i18n="Alerts">Alertes</div>
                             <span class="badge bg-label-danger ms-auto" id="unread-alerts-count">0</span>
+                        </a>
+                    </li>
+                    
+                    <!-- Users (Administration) -->
+                    <li class="menu-item {{ request()->routeIs('users.*') ? 'active' : '' }}">
+                        <a href="{{ route('users.index') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-user-circle"></i>
+                            <div data-i18n="Users">Utilisateurs</div>
                         </a>
                     </li>
                     

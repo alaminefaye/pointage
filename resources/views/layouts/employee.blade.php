@@ -7,7 +7,8 @@
     <meta name="description" content="@yield('description', '')" />
     
     <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="{{ asset('assets/img/favicon/favicon.ico') }}" />
+    <link rel="icon" type="image/svg+xml" href="{{ asset('assets/img/favicon/favicon.svg') }}" />
+    <link rel="alternate icon" type="image/x-icon" href="{{ asset('assets/img/favicon/favicon.ico') }}" />
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />

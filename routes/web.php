@@ -14,6 +14,7 @@ use App\Http\Controllers\EmployeeAuthController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\OvertimeController;
 use App\Http\Controllers\EmployeeRestDayController;
+use App\Http\Controllers\UserController;
 
 // Admin Authentication Routes
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -88,6 +89,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/rest-days', [EmployeeRestDayController::class, 'index'])->name('rest-days.index');
     Route::post('/rest-days', [EmployeeRestDayController::class, 'store'])->name('rest-days.store');
     Route::delete('/rest-days/{restDay}', [EmployeeRestDayController::class, 'destroy'])->name('rest-days.destroy');
+    
+    // Users (Administration)
+    Route::resource('users', UserController::class);
 });
 
 // API Routes for employee attendance (can be called from mobile app)
