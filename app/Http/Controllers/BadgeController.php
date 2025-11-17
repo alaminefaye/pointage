@@ -164,9 +164,8 @@ class BadgeController extends Controller
         // Générer le PDF avec le même design que print.blade.php
         $pdf = Pdf::loadView('badges.badge-pdf', compact('badge', 'qrCodeBase64'));
         
-        // Définir la taille de page personnalisée pour le badge (85.6mm x 53.98mm)
-        // 1mm = 2.83465pt, donc 85.6mm = 242.6pt et 53.98mm = 153.1pt
-        $pdf->setPaper([0, 0, 242.6, 153.1], 'custom');
+        // Utiliser A4 et centrer le badge (85.6mm x 53.98mm = taille d'une carte de crédit)
+        $pdf->setPaper('a4', 'portrait');
         
         $fileName = 'Badge-' . $badge->badge_number . '-' . $badge->id . '.pdf';
         

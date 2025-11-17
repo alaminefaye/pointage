@@ -5,7 +5,7 @@
     <title>Badge - {{ $badge->employee->full_name }}</title>
     <style>
         @page {
-            size: 85.6mm 53.98mm;
+            size: A4;
             margin: 0;
         }
         
@@ -13,6 +13,7 @@
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
+            text-align: center;
         }
         
         .badge-container {
@@ -21,6 +22,7 @@
             background-color: #074136;
             padding: 12px;
             color: white;
+            margin: 120mm auto 0 auto;
         }
         
         table {
