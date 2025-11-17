@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AttendanceRecord;
 use App\Models\Employee;
 use App\Models\EmployeeRestDay;
+use App\Models\OvertimeRecord;
 use App\Services\AttendanceCalculationService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -76,10 +77,30 @@ class ReportController extends Controller
 
         $records = $query->get();
 
+        // Calculer le cumul mensuel des heures supplémentaires par employé à partir des OvertimeRecord
+        $overtimeQuery = OvertimeRecord::whereBetween('date', [$startDate, $endDate]);
+        if ($employeeId) {
+            $overtimeQuery->where('employee_id', $employeeId);
+        }
+        $overtimeRecords = $overtimeQuery->get();
+        
+        // Calculer le cumul mensuel par employé
+        $monthlyOvertimeByEmployee = [];
+        foreach ($overtimeRecords as $overtime) {
+            $empId = $overtime->employee_id;
+            if (!isset($monthlyOvertimeByEmployee[$empId])) {
+                $monthlyOvertimeByEmployee[$empId] = 0;
+            }
+            $monthlyOvertimeByEmployee[$empId] += $overtime->hours;
+        }
+
         // Calculer les statistiques
+        // Pour les heures supplémentaires, utiliser les OvertimeRecord au lieu des overtime_minutes
+        $totalOvertimeHours = round($overtimeRecords->sum('hours'), 2);
+        
         $summary = [
             'total_hours' => round($records->sum('total_minutes') / 60, 2),
-            'total_overtime_hours' => round($records->sum('overtime_minutes') / 60, 2),
+            'total_overtime_hours' => $totalOvertimeHours,
             'total_absences' => $records->where('is_absent', true)->count(),
             'total_working_days' => $records->where('is_absent', false)->whereNotNull('check_in_time')->count(),
             'total_records' => $records->count(),
@@ -110,7 +131,8 @@ class ReportController extends Controller
             'endDate',
             'year',
             'month',
-            'employees'
+            'employees',
+            'monthlyOvertimeByEmployee'
         ));
     }
 
@@ -153,10 +175,30 @@ class ReportController extends Controller
 
         $records = $query->get();
 
+        // Calculer le cumul mensuel des heures supplémentaires par employé à partir des OvertimeRecord
+        $overtimeQuery = OvertimeRecord::whereBetween('date', [$startDate, $endDate]);
+        if ($employeeId) {
+            $overtimeQuery->where('employee_id', $employeeId);
+        }
+        $overtimeRecords = $overtimeQuery->get();
+        
+        // Calculer le cumul mensuel par employé
+        $monthlyOvertimeByEmployee = [];
+        foreach ($overtimeRecords as $overtime) {
+            $empId = $overtime->employee_id;
+            if (!isset($monthlyOvertimeByEmployee[$empId])) {
+                $monthlyOvertimeByEmployee[$empId] = 0;
+            }
+            $monthlyOvertimeByEmployee[$empId] += $overtime->hours;
+        }
+
         // Calculer les statistiques
+        // Pour les heures supplémentaires, utiliser les OvertimeRecord au lieu des overtime_minutes
+        $totalOvertimeHours = round($overtimeRecords->sum('hours'), 2);
+        
         $summary = [
             'total_hours' => round($records->sum('total_minutes') / 60, 2),
-            'total_overtime_hours' => round($records->sum('overtime_minutes') / 60, 2),
+            'total_overtime_hours' => $totalOvertimeHours,
             'total_absences' => $records->where('is_absent', true)->count(),
             'total_working_days' => $records->where('is_absent', false)->whereNotNull('check_in_time')->count(),
             'total_records' => $records->count(),
@@ -182,7 +224,8 @@ class ReportController extends Controller
             'startDate',
             'endDate',
             'year',
-            'month'
+            'month',
+            'monthlyOvertimeByEmployee'
         ));
 
         $filename = 'rapport-pointage-' . $year . '-' . str_pad($month, 2, '0', STR_PAD_LEFT);

@@ -236,7 +236,13 @@
                     @endif
                 </td>
                 <td><strong>{{ number_format($record->total_minutes / 60, 2) }}h</strong></td>
-                <td><strong>{{ number_format($record->overtime_minutes / 60, 2) }}h</strong></td>
+                <td>
+                    @php
+                        $employeeId = $record->employee_id;
+                        $monthlyOvertime = $monthlyOvertimeByEmployee[$employeeId] ?? 0;
+                    @endphp
+                    <strong>{{ number_format($monthlyOvertime, 2) }}h</strong>
+                </td>
                 <td>
                     @if($record->is_absent)
                         <span class="badge badge-danger">Absent</span>
@@ -260,7 +266,7 @@
             <tr>
                 <td colspan="{{ $employee ? 3 : 6 }}"><strong>TOTAL</strong></td>
                 <td><strong>{{ number_format($records->sum('total_minutes') / 60, 2) }}h</strong></td>
-                <td><strong>{{ number_format($records->sum('overtime_minutes') / 60, 2) }}h</strong></td>
+                <td><strong>{{ number_format($summary['total_overtime_hours'], 2) }}h</strong></td>
                 <td colspan="2"></td>
             </tr>
         </tfoot>
